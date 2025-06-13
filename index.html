@@ -1,0 +1,41 @@
+<!DOCTYPE html> <html> <head> <title>UPSC GS Mains Question Archive</title> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script> <style> body { font-family: 'Segoe UI', sans-serif; background: #f4f7fb; padding: 20px; color: #333; } .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); } h2 { text-align: center; color: #002855; margin-bottom: 30px; } label { font-weight: bold; margin-top: 10px; } select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #ccc; } button { background: #002855; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; } table { width: 100%; border-collapse: collapse; margin-top: 25px; } th, td { padding: 10px; border: 1px solid #ccc; text-align: left; vertical-align: top; } th { background: #002855; color: white; } </style> </head> <body> <div class="container"> <h2>UPSC Mains GS Questions Archive</h2>
+<label for="gs">Select GS Paper:</label>
+<select id="gs" onchange="updateSubjectsAndTopics()">
+  <option value="">-- Select GS Paper --</option>
+  <option value="GS1">GS1</option>
+  <option value="GS2">GS2</option>
+  <option value="GS3">GS3</option>
+  <option value="GS4">GS4</option>
+</select>
+
+<label for="subject">Select Subject:</label>
+<select id="subject" onchange="updateTopics()">
+  <option value="">-- Select Subject --</option>
+</select>
+
+<label for="topic">Select Theme/Topic:</label>
+<select id="topic">
+  <option value="">-- Select Theme --</option>
+</select>
+
+<label for="year">Select Year:</label>
+<select id="year">
+  <option value="">-- Select Year --</option>
+</select>
+
+<button onclick="filterQuestions()">Filter Questions</button>
+<button onclick="downloadPDF()">Download PDF</button>
+
+<table id="output" style="display:none;">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>GS Paper</th>
+      <th>Subject</th>
+      <th>Theme</th>
+      <th>Question</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+</div> <script> const SHEET_ID = '1jBJedtgRkpmU4yY5acizJZgMiZVTLAguck-atkbWdPE'; const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=xlsx`; let fullData = {}; async function fetchSheetData() { const data = await fetch(SHEET_URL).then(r => r.arrayBuffer()); const workbook = XLSX.read(data, { type: 'array' }); ['GS1', 'GS2', 'GS3', 'GS4'].forEach(name => { const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' }); fullData[name] = sheet; }); } function updateSubjectsAndTopics() { const gs = document.getElementById('gs').value; const subjectSelect = document.getElementById('subject'); const topicSelect = document.getElementById('topic'); const yearSelect = document.getElementById('year'); subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>'; topicSelect.innerHTML = '<option value="">-- Select Theme --</option>'; yearSelect.innerHTML = '<option value="">-- Select Year --</option>'; if (!gs || !fullData[gs]) return; const subjects = [...new Set(fullData[gs].map(row => row['Subject']).filter(Boolean))]; const years = [...new Set(fullData[gs].map(row => row['Year']).filter(Boolean))]; subjects.forEach(sub => { const opt = document.createElement('option'); opt.value = sub; opt.innerText = sub; subjectSelect.appendChild(opt); }); years.sort((a,b)=>b-a).forEach(y => { const opt = document.createElement('option'); opt.value = y; opt.innerText = y; yearSelect.appendChild(opt); }); } function updateTopics() { const gs = document.getElementById('gs').value; const subject = document.getElementById('subject').value; const topicSelect = document.getElementById('topic'); topicSelect.innerHTML = '<option value="">-- Select Theme --</option>'; if (!gs || !subject || !fullData[gs]) return; const topics = [...new Set(fullData[gs].filter(r => r['Subject'] === subject).map(r => r['Theme']).filter(Boolean))]; topics.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.innerText = t; topicSelect.appendChild(opt); }); } function filterQuestions() { const gs = document.getElementById('gs').value; const subject = document.getElementById('subject').value; const theme = document.getElementById('topic').value; const year = document.getElementById('year').value; const table = document.getElementById('output'); const tbody = table.querySelector('tbody'); tbody.innerHTML = ''; if (!gs || !fullData[gs]) return; const rows = fullData[gs].filter(r => (!subject || r['Subject'] === subject) && (!theme || r['Theme'] === theme) && (!year || String(r['Year']) === year) ); if (rows.length === 0) { table.style.display = 'none'; alert('No questions found for the selected filters.'); return; } rows.forEach(r => { const tr = document.createElement('tr'); tr.innerHTML = ` <td>${r['Year']}</td> <td>${gs}</td> <td>${r['Subject']}</td> <td>${r['Theme']}</td> <td>${r['Question']}</td> `; tbody.appendChild(tr); }); table.style.display = ''; } function downloadPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(14); doc.setTextColor(40); doc.text("UPSC Mains Questions", 105, 15, null, null, 'center'); const table = document.getElementById('output'); const headers = [...table.querySelectorAll('thead th')].map(th => th.innerText); const rows = [...table.querySelectorAll('tbody tr')].map(tr => [...tr.children].map(td => td.innerText)); doc.autoTable({ head: [headers], body: rows, startY: 25, headStyles: { fillColor: [0, 40, 85], textColor: 255 }, bodyStyles: { fontSize: 10 }, styles: { overflow: 'linebreak', cellWidth: 'wrap' } }); doc.save('GS_Questions.pdf'); } fetchSheetData(); </script> </body> </html>
