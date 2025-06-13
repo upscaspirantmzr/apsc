@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPSC Mains Question Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better aesthetics and responsiveness */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #10b981; /* Emerald-500 */
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #059669; /* Emerald-600 */
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem 1rem;
+            padding-right: 2.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+        tr:nth-child(even) {
+            background-color: #f3f4f6; /* Subtle zebra striping */
+        }
+        tr:hover {
+            background-color: #e5e7eb;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            .flex-col-mobile {
+                flex-direction: column;
+            }
+            .flex-col-mobile > * {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            .flex-col-mobile > *:last-child {
+                margin-bottom: 0;
+            }
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            tr {
+                border: 1px solid #ccc;
+                margin-bottom: 1rem;
+                border-radius: 0.5rem;
+                overflow: hidden; /* Ensure rounded corners apply */
+            }
+            td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+            }
+            td:before {
+                position: absolute;
+                top: 0;
+                left: 6px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                content: attr(data-label);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container py-8">
+        <div class="card">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">UPSC Mains Question Portal</h1>
+
+            <!-- Message Area -->
+            <div id="messageBox" class="mb-6 px-4 py-3 rounded-md hidden"></div>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-6 flex-col-mobile">
+                <!-- GS Paper Selection -->
+                <div class="flex-1">
+                    <label for="gsPaperSelect" class="block text-sm font-medium text-gray-700 mb-1">Select GS Paper:</label>
+                    <select id="gsPaperSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                        <option value="">-- Select GS Paper --</option>
+                        <option value="GS1">GS Paper 1</option>
+                        <option value="GS2">GS Paper 2</option>
+                        <option value="GS3">GS Paper 3</option>
+                        <option value="GS4">GS Paper 4</option>
+                        <option value="GS5">GS Paper 5</option>
+                    </select>
+                </div>
+
+                <!-- Subject Selection -->
+                <div class="flex-1">
+                    <label for="subjectSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Subject:</label>
+                    <select id="subjectSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" disabled>
+                        <option value="">-- Select Subject --</option>
+                    </select>
+                </div>
+
+                <!-- Topic Selection -->
+                <div class="flex-1">
+                    <label for="topicSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Topic:</label>
+                    <select id="topicSelect" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" disabled>
+                        <option value="">-- Select Topic --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-4 mb-8">
+                <button id="fetchQuestionsBtn" class="btn btn-primary">
+                    <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 2m0 0l-2-2m2 2V9m6 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
+                    Fetch Questions
+                </button>
+                <button id="downloadPdfBtn" class="btn btn-secondary" disabled>
+                    <svg class="h-5 w-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Download PDF
+                </button>
+            </div>
+
+            <!-- Questions Display Area -->
+            <div id="questionsContainer" class="overflow-x-auto rounded-lg shadow-md">
+                <table id="questionsTable" class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th class="py-3 px-4">Year</th>
+                            <th class="py-3 px-4">GS Paper</th>
+                            <th class="py-3 px-4">Subject</th>
+                            <th class="py-3 px-4">Topic</th>
+                            <th class="py-3 px-4">Question</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Questions will be dynamically loaded here -->
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-gray-500">Please select filters and click 'Fetch Questions'.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- jsPDF and AutoTable CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js"></script>
+
+    <script>
+        // Initialize jsPDF globally
+        const { jsPDF } = window.jspdf;
+
+        // Configuration for Google Sheets Data
+        // Single Google Sheet URL (your provided link)
+        const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1qxQtch_Zz1Z1or0q-Jz5ejceRzcmjNHCSbW3k7W3ej8/edit?usp=sharing';
+        // Extract Spreadsheet ID from the URL
+        const SPREADSHEET_ID = GOOGLE_SHEET_URL.match(/\/d\/(.*?)\//)?.[1];
+
+        // Map GS Paper values to actual TAB NAMES (sheet names) within your Google Sheet
+        // This assumes your tabs are named exactly 'GS1', 'GS2', etc.
+        const GS_TAB_NAMES = {
+            'GS1': 'GS1',
+            'GS2': 'GS2',
+            'GS3': 'GS3',
+            'GS4': 'GS4',
+            'GS5': 'GS5'
+        };
+
+        // DOM Elements
+        const gsPaperSelect = document.getElementById('gsPaperSelect');
+        const subjectSelect = document.getElementById('subjectSelect');
+        const topicSelect = document.getElementById('topicSelect');
+        const fetchQuestionsBtn = document.getElementById('fetchQuestionsBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const questionsTableBody = document.querySelector('#questionsTable tbody');
+        const messageBox = document.getElementById('messageBox');
+
+        let allQuestionsData = []; // Stores all fetched questions for the selected GS paper
+        let currentFilteredData = []; // Stores currently displayed filtered questions
+
+        // Function to show messages to the user
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = 'mb-6 px-4 py-3 rounded-md block'; // Make it visible
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-700', 'border', 'border-green-400');
+            } else {
+                messageBox.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-400');
+            }
+        }
+
+        // Function to clear messages
+        function clearMessage() {
+            messageBox.classList.add('hidden');
+            messageBox.textContent = '';
+        }
+
+        // Function to fetch data from Google Sheet using Google Visualization API
+        async function fetchGoogleSheetData(gsPaperKey) {
+            clearMessage();
+            if (!SPREADSHEET_ID) {
+                showMessage('Error: Could not extract Spreadsheet ID from the provided Google Sheet URL. Please check the URL format.', 'error');
+                return null;
+            }
+
+            const sheetName = GS_TAB_NAMES[gsPaperKey];
+            if (!sheetName) {
+                showMessage(`Error: No tab name mapped for "${gsPaperKey}". Please check GS_TAB_NAMES in the code.`, 'error');
+                return null;
+            }
+
+            // Construct the Google Visualization API URL using the spreadsheet ID and specific tab name
+            const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
+
+            showMessage(`Fetching data from Google Sheet tab: "${sheetName}" for ${gsPaperKey}...`, 'info');
+            console.log(`Attempting to fetch data from URL: ${url}`); // Debugging log
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+                const text = await response.text();
+                // Google Visualization API returns JSONP, typically starting with "google.visualization.Query.setResponse("
+                const jsonpData = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(jsonpData);
+
+                if (data.table && data.table.rows) {
+                    const values = data.table.rows.map(row => row.c.map(cell => cell ? (cell.v || '') : ''));
+                    const headers = data.table.cols.map(col => col.label || col.id);
+                    console.log('Fetched raw data from Google Sheet (first 5 rows):', [headers, ...values.slice(0, 5)]); // Debugging log: parsed data sample
+                    clearMessage();
+                    return [headers, ...values]; // Combine headers and data rows
+                } else {
+                    throw new Error("No table data found in the response for this tab. Check if the tab is empty or incorrectly structured.");
+                }
+            } catch (error) {
+                console.error('Error fetching Google Sheet data:', error);
+                showMessage(`Failed to fetch data for tab "${sheetName}": ${error.message}. Please ensure your Google Sheet is publicly shared ("Anyone with the link", "Viewer") and this specific tab ("${sheetName}") is correctly named and published to the web.`, 'error');
+                return null;
+            }
+        }
+
+        // Function to populate dropdowns with unique values
+        function populateDropdown(selectElement, data, columnIndex, defaultValue = '-- Select --') {
+            selectElement.innerHTML = `<option value="">${defaultValue}</option>`;
+            const uniqueValues = new Set();
+            // Skip the header row (index 0)
+            for (let i = 1; i < data.length; i++) {
+                // IMPORTANT: Check if the row and column exist before accessing
+                if (data[i] && data[i].length > columnIndex) {
+                    const value = data[i][columnIndex];
+                    // Ensure value is not null/undefined/empty string after trimming
+                    if (value !== null && value !== undefined && String(value).trim() !== '') {
+                        uniqueValues.add(String(value).trim());
+                    }
+                } else {
+                    console.warn(`Row ${i} or column ${columnIndex} is missing data. Skipping for dropdown population.`);
+                }
+            }
+            const sortedValues = Array.from(uniqueValues).sort();
+            console.log(`Populating ${selectElement.id}: Processing column index ${columnIndex}.`);
+            console.log(`Unique values found for ${selectElement.id}:`, sortedValues); // Log unique values for debugging
+
+            if (sortedValues.length === 0) { // If no values found after sorting
+                // Only show message if it's not the initial "Select" option for a primary dropdown
+                if (defaultValue !== '-- Select --') {
+                     showMessage(`No ${selectElement.id.replace('Select', '').toLowerCase()}s found for the current selection. This might be due to empty cells or typos in column ${columnIndex + 1} of your sheet.`, 'info');
+                }
+            }
+
+            sortedValues.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                selectElement.appendChild(option);
+            });
+            selectElement.disabled = false;
+        }
+
+        // Function to render questions in the table
+        function renderQuestions(questions) {
+            questionsTableBody.innerHTML = '';
+            currentFilteredData = questions; // Update current filtered data
+
+            if (questions.length === 0) {
+                questionsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No questions found for the selected filters.</td></tr>`;
+                downloadPdfBtn.disabled = true;
+                return;
+            }
+
+            questions.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td data-label="Year">${row[0] || ''}</td>
+                    <td data-label="GS Paper">${row[1] || ''}</td>
+                    <td data-label="Subject">${row[2] || ''}</td>
+                    <td data-label="Topic">${row[3] || ''}</td>
+                    <td data-label="Question" class="whitespace-normal break-words">${row[4] || ''}</td>
+                `;
+                questionsTableBody.appendChild(tr);
+            });
+            downloadPdfBtn.disabled = false;
+        }
+
+        // Event listener for GS Paper selection change
+        gsPaperSelect.addEventListener('change', async () => {
+            const selectedGsPaper = gsPaperSelect.value;
+            subjectSelect.innerHTML = '<option value="">-- Select Subject --</option>';
+            subjectSelect.disabled = true;
+            topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+            topicSelect.disabled = true;
+            questionsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Please select filters and click 'Fetch Questions'.</td></tr>`;
+            downloadPdfBtn.disabled = true;
+            allQuestionsData = []; // Clear previous data
+
+            if (selectedGsPaper) {
+                const data = await fetchGoogleSheetData(selectedGsPaper);
+                if (data && data.length > 1) { // Check if data is not empty and has more than just headers
+                    allQuestionsData = data;
+                    // Assuming columns: Year (0), GS Paper (1), Subject (2), Topic (3), Question (4)
+                    populateDropdown(subjectSelect, allQuestionsData, 2, '-- Select Subject --'); // Subject is at index 2
+                    showMessage(`Data for ${selectedGsPaper} loaded. Now, select a Subject.`, 'success');
+                } else {
+                    showMessage(`No valid data found for the "${GS_TAB_NAMES[selectedGsPaper]}" tab. Please ensure it's set up, published to the web, and contains questions.`, 'info');
+                }
+            } else {
+                 showMessage('Please select a GS Paper to load questions.', 'info');
+            }
+        });
+
+        // Event listener for Subject selection change
+        subjectSelect.addEventListener('change', () => {
+            const selectedSubject = subjectSelect.value;
+            console.log('Subject selected:', selectedSubject);
+            topicSelect.innerHTML = '<option value="">-- Select Topic --</option>';
+            topicSelect.disabled = true;
+            questionsTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Please select filters and click 'Fetch Questions'.</td></tr>`;
+            downloadPdfBtn.disabled = true;
+
+            if (selectedSubject && allQuestionsData.length > 0) {
+                // Filter data to get topics for the selected subject
+                const filteredBySubject = allQuestionsData.filter((row, index) => {
+                    // Skip header row and filter by subject (column index 2)
+                    return index > 0 && (selectedSubject === '' || row[2]?.trim() === selectedSubject.trim());
+                });
+                console.log(`Data filtered by subject ("${selectedSubject}"): ${filteredBySubject.length} rows.`);
+                console.log('Sample of data filtered by subject (first 3 rows):', filteredBySubject.slice(0,3));
+
+                // Column index for Topic is 3
+                populateDropdown(topicSelect, filteredBySubject, 3, '-- Select Topic --');
+                if (topicSelect.options.length <= 1) { // Only the default option means no topics found
+                     showMessage('No topics found for this subject. This might be due to empty cells or typos in the "Topic" column for this subject.', 'info');
+                } else {
+                    clearMessage(); // Clear message if topics are found
+                }
+            } else {
+                 showMessage('Please select a Subject.', 'info');
+            }
+        });
+
+
+        // Event listener for Fetch Questions button click
+        fetchQuestionsBtn.addEventListener('click', () => {
+            clearMessage();
+            const selectedGsPaper = gsPaperSelect.value;
+            const selectedSubject = subjectSelect.value;
+            const selectedTopic = topicSelect.value;
+
+            if (!selectedGsPaper) {
+                showMessage('Please select a GS Paper first.', 'error');
+                return;
+            }
+
+            if (allQuestionsData.length === 0) {
+                showMessage('No data loaded for this GS Paper. Please select a GS Paper and wait for it to load, then try fetching.', 'info');
+                return;
+            }
+
+            let filteredQuestions = allQuestionsData.filter((row, index) => {
+                // Skip header row (index 0)
+                if (index === 0) return false;
+
+                const gsPaper = row[1]?.trim();
+                const subject = row[2]?.trim();
+                const topic = row[3]?.trim();
+
+                const matchesGsPaper = selectedGsPaper === '' || (gsPaper === selectedGsPaper);
+                const matchesSubject = selectedSubject === '' || (subject === selectedSubject);
+                const matchesTopic = selectedTopic === '' || (topic === selectedTopic);
+
+                return matchesGsPaper && matchesSubject && matchesTopic;
+            });
+
+            renderQuestions(filteredQuestions);
+            if (filteredQuestions.length > 0) {
+                 showMessage(`Found ${filteredQuestions.length} questions.`, 'success');
+            } else {
+                 showMessage('No questions found for the selected filters. Try different combinations.', 'info');
+            }
+        });
+
+        // Event listener for Download PDF button click
+        downloadPdfBtn.addEventListener('click', () => {
+            clearMessage();
+            if (currentFilteredData.length === 0) {
+                showMessage('No questions to download. Please fetch questions first.', 'info');
+                return;
+            }
+
+            // Define columns for jspdf-autotable
+            const head = [['Year', 'GS Paper', 'Subject', 'Topic', 'Question']];
+
+            // Map currentFilteredData to table body format, ensure questions are strings
+            const body = currentFilteredData.map(row => [
+                row[0] || '', // Year
+                row[1] || '', // GS Paper
+                row[2] || '', // Subject
+                row[3] || '', // Topic
+                String(row[4] || '') // Question - ensure it's a string
+            ]);
+
+            const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, 'a4' for A4 size
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 60, // Start table below the title
+                theme: 'striped', // 'striped', 'grid', 'plain'
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 9,
+                    cellPadding: 6,
+                    halign: 'left', // Horizontal alignment for cells
+                    valign: 'top', // Vertical alignment for cells
+                    overflow: 'linebreak', // Handle long text by breaking lines
+                    cellWidth: 'wrap' // Adjust cell width based on content
+                },
+                headStyles: {
+                    fillColor: [79, 70, 229], // Indigo-600 for header background
+                    textColor: [255, 255, 255], // White text
+                    fontStyle: 'bold',
+                    fontSize: 10
+                },
+                columnStyles: {
+                    0: { cellWidth: 50 }, // Year
+                    1: { cellWidth: 70 }, // GS Paper
+                    2: { cellWidth: 100 }, // Subject
+                    3: { cellWidth: 100 }, // Topic
+                    4: { cellWidth: 'auto' } // Question - auto width to fill remaining space
+                },
+                didDrawPage: function (data) {
+                    // Header
+                    doc.setFontSize(16);
+                    doc.setTextColor(44, 62, 80); // Dark text color
+                    doc.text('UPSC Mains Previous Year Questions', data.settings.margin.left, 40);
+
+                    // Footer
+                    doc.setFontSize(10);
+                    doc.setTextColor(150); // Gray text color
+                    doc.text(`Page ${data.pageNumber} of ${doc.internal.getNumberOfPages()}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 30, { align: 'right' });
+                },
+                margin: { top: 50, bottom: 40, left: 30, right: 30 } // Adjust margins for better layout
+            });
+
+            doc.save('UPSC_Mains_Questions.pdf');
+            showMessage('PDF generated successfully!', 'success');
+        });
+
+        // Initial state: disable subject and topic dropdowns
+        subjectSelect.disabled = true;
+        topicSelect.disabled = true;
+
+        // Initial message
+        showMessage('Please ensure your Google Sheet is publicly shared and has the correct tabs. Then, select a GS Paper to begin.', 'info');
+    </script>
+</body>
+</html>
