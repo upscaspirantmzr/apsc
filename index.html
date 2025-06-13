@@ -295,7 +295,7 @@
                 }
             } catch (error) {
                 console.error('Error fetching Google Sheet data:', error);
-                showMessage(`Failed to fetch data for tab "${sheetName}": ${error.message}. Please ensure your Google Sheet is publicly shared ("Anyone with the link", "Viewer") and this specific tab is correctly named and published to the web.`, 'error');
+                showMessage(`Failed to fetch data for tab "${sheetName}": ${error.message}. `, 'error');
                 return null;
             }
         }
