@@ -104,6 +104,16 @@
             border-color: #059669;
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
+        .btn-tertiary { /* New style for Resources PDF button */
+            background-color: #f97316; /* Orange-500 */
+            color: #ffffff;
+            border: 2px solid #f97316;
+        }
+        .btn-tertiary:hover {
+            background-color: #ea580c; /* Orange-600 */
+            border-color: #ea580c;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -230,9 +240,13 @@
                         <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 2m0 0l-2-2m2 2V9m6 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
                         View Schedule
                     </button>
-                    <button onclick="downloadPDF()" id="downloadPdfBtn" class="btn btn-secondary" disabled>
+                    <button onclick="downloadDailyPlanPDF()" id="downloadDailyPlanPdfBtn" class="btn btn-secondary" disabled>
                         <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Download PDF
+                        Download Daily Plan PDF
+                    </button>
+                    <button onclick="downloadResourcesPDF()" id="downloadResourcesPdfBtn" class="btn btn-tertiary">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Download Resources PDF
                     </button>
                 </div>
 
@@ -287,7 +301,8 @@
         // DOM elements
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
-        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const downloadDailyPlanPdfBtn = document.getElementById('downloadDailyPlanPdfBtn'); // Renamed ID
+        const downloadResourcesPdfBtn = document.getElementById('downloadResourcesPdfBtn'); // New button
         const messageBox = document.getElementById('messageBox');
 
         // Function to show messages
@@ -302,6 +317,8 @@
             } else {
                 messageBox.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-400');
             }
+            // Ensure border-l-4 is always present for message box
+            messageBox.classList.add('border-l-4'); 
         }
 
         // Function to clear messages
@@ -323,78 +340,90 @@
                 const data = await response.arrayBuffer();
                 const workbook = XLSX.read(data, { type: 'array' });
 
-                // Process 'Daily Plan' sheet
-                const dailyRaw = XLSX.utils.sheet_to_json(workbook.Sheets['Daily Plan'], { header: 1 }); // Read headers as first row array
-                if (dailyRaw.length > 0) {
-                    const headers = dailyRaw[0]; // Assuming first row is headers
-                    const dataRows = dailyRaw.slice(1); // Data rows start from second row
+                // --- Process 'Daily Plan' sheet ---
+                const dailyPlanSheet = workbook.Sheets['Daily Plan'];
+                if (dailyPlanSheet) {
+                    const dailyRaw = XLSX.utils.sheet_to_json(dailyPlanSheet, { header: 1 }); // Read headers as first row array
+                    if (dailyRaw.length > 0) {
+                        const headers = dailyRaw[0].map(h => String(h || '').trim()); // Trim headers to remove whitespace
+                        const dataRows = dailyRaw.slice(1);
 
-                    fullPlan = dataRows.map(row => {
-                        const rowObject = {};
-                        headers.forEach((header, index) => {
-                            // Trim header names for robust matching
-                            const cleanedHeader = header.trim();
-                            let cellValue = row[index];
-                            
-                            // Specific handling for 'Date' column based on PDF format "9 Jun"
-                            if (cleanedHeader === 'Date' && typeof cellValue === 'string') {
-                                try {
-                                    // Attempt to parse '9 Jun' format by appending current year
-                                    const currentYear = new Date().getFullYear();
-                                    let parsedDate = new Date(`${cellValue} ${currentYear}`);
-                                    if (isNaN(parsedDate.getTime())) {
-                                        // If parsing with current year fails, try next year (for plans spanning year end)
-                                        parsedDate = new Date(`${cellValue} ${currentYear + 1}`);
+                        fullPlan = dataRows.map(row => {
+                            const rowObject = {};
+                            headers.forEach((header, index) => {
+                                let cellValue = row[index];
+                                
+                                if (header === 'Date' && (typeof cellValue === 'string' || typeof cellValue === 'number')) {
+                                    try {
+                                        let parsedDate;
+                                        if (typeof cellValue === 'number') {
+                                            const jsDate = XLSX.SSF.parse_date_code(cellValue);
+                                            parsedDate = new Date(jsDate.y, jsDate.m - 1, jsDate.d);
+                                        } else { // string date
+                                            // Attempt to parse '9 Jun' format by appending current year
+                                            const currentYear = new Date().getFullYear();
+                                            parsedDate = new Date(`${cellValue} ${currentYear}`);
+                                            if (isNaN(parsedDate.getTime())) {
+                                                // If parsing with current year fails, try next year (for plans spanning year end)
+                                                parsedDate = new Date(`${cellValue} ${currentYear + 1}`);
+                                            }
+                                        }
+                                        if (!isNaN(parsedDate.getTime())) {
+                                            rowObject[header] = parsedDate;
+                                        } else {
+                                            rowObject[header] = null; // Mark as invalid date
+                                            console.warn(`Could not parse date "${cellValue}" in Daily Plan sheet.`);
+                                        }
+                                    } catch (e) {
+                                        rowObject[header] = null;
+                                        console.warn(`Error parsing date "${cellValue}" in Daily Plan sheet:`, e);
                                     }
-                                    if (!isNaN(parsedDate.getTime())) {
-                                        rowObject[cleanedHeader] = parsedDate;
-                                    } else {
-                                        rowObject[cleanedHeader] = null; // Mark as invalid date
-                                        console.warn(`Could not parse date string "${cellValue}"`);
-                                    }
-                                } catch (e) {
-                                    rowObject[cleanedHeader] = null;
-                                    console.warn(`Error parsing date "${cellValue}":`, e);
+                                } else {
+                                    rowObject[header] = cellValue;
                                 }
-                            } else if (cleanedHeader === 'Date' && typeof cellValue === 'number') {
-                                // Handle Excel date numbers
-                                const jsDate = XLSX.SSF.parse_date_code(cellValue);
-                                rowObject[cleanedHeader] = new Date(jsDate.y, jsDate.m - 1, jsDate.d);
-                            } else {
-                                rowObject[cleanedHeader] = cellValue;
-                            }
-                        });
-                        return rowObject;
-                    }).filter(row => row['Date'] instanceof Date && !isNaN(row['Date'])); // Filter out rows with invalid dates
+                            });
+                            return rowObject;
+                        }).filter(row => row['Date'] instanceof Date && !isNaN(row['Date'])); // Filter out rows with invalid dates
+                        console.log('Daily Plan Headers from sheet:', headers);
+                    } else {
+                        fullPlan = [];
+                    }
                 } else {
+                    console.warn("Sheet 'Daily Plan' not found in the workbook.");
                     fullPlan = [];
                 }
 
-                // Process 'Resource List' sheet
-                // Use header:1 to get array of arrays, and then map to object
-                const resourceRaw = XLSX.utils.sheet_to_json(workbook.Sheets['Resource List'], { header: 1 });
-                if (resourceRaw.length > 0) {
-                    const resourceHeaders = resourceRaw[0].map(h => h.trim()); // Trim resource headers
-                    resourceList = resourceRaw.slice(1).map(row => {
-                        const rowObject = {};
-                        resourceHeaders.forEach((header, index) => {
-                            rowObject[header] = row[index];
+                // --- Process 'Resource List' sheet ---
+                const resourceListSheet = workbook.Sheets['Resource List'];
+                if (resourceListSheet) {
+                    const resourceRaw = XLSX.utils.sheet_to_json(resourceListSheet, { header: 1 });
+                    if (resourceRaw.length > 0) {
+                        const resourceHeaders = resourceRaw[0].map(h => String(h || '').trim()); // Trim resource headers
+                        resourceList = resourceRaw.slice(1).map(row => {
+                            const rowObject = {};
+                            resourceHeaders.forEach((header, index) => {
+                                rowObject[header] = row[index];
+                            });
+                            return rowObject;
                         });
-                        return rowObject;
-                    });
+                        console.log('Resource List Headers from sheet:', resourceHeaders);
+                    } else {
+                        resourceList = [];
+                    }
                 } else {
+                    console.warn("Sheet 'Resource List' not found in the workbook.");
                     resourceList = [];
                 }
 
                 renderTable('resources', resourceList, 'schedule-table');
                 
                 showMessage('Data loaded successfully! Please select dates to view your personalized schedule.', 'success');
-                console.log('Full Daily Plan Data:', fullPlan);
-                console.log('Resource List Data:', resourceList);
+                console.log('Full Daily Plan Data (processed):', fullPlan);
+                console.log('Resource List Data (processed):', resourceList);
 
             } catch (error) {
                 console.error('Error loading sheets:', error);
-                showMessage(`Failed to load data: ${error.message}. Please ensure the Google Sheet is named 'Daily Plan' and 'Resource List', published as XLSX, and accessible.`, 'error');
+                showMessage(`Failed to load data: ${error.message}. Please ensure the Google Sheet has tabs named 'Daily Plan' and 'Resource List', is published as XLSX, and is accessible.`, 'error');
             }
         }
 
@@ -413,7 +442,9 @@
             end.setHours(23, 59, 59, 999);
 
             filteredPlan = fullPlan.filter(r => {
-                const d = new Date(r['Date']);
+                const d = r['Date']; // r['Date'] is already a Date object from loadSheets
+                if (!(d instanceof Date) || isNaN(d.getTime())) return false; // Ensure it's a valid date
+
                 d.setHours(0, 0, 0, 0); // Normalize plan date to start of day for comparison
                 return d >= start && d <= end;
             });
@@ -425,29 +456,24 @@
                                 ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                                 : '';
 
-                // Use the exact header name from the Google Sheet for access
-                const gsTopic = r['General Studies Topic (Reading/Revision)'] || '';
-                const currentAffairs = r['Current Affairs'] || '';
-                const csatPractice = r['CSAT Practice'] || '';
-                const optionalSubject = r['Optional Subject'] || '';
-
+                // Access properties using the exact (trimmed) header names
                 return {
                     Date: dateStr,
                     Day: r['Day'] || '',
-                    'General Studies Topic': gsTopic, // Renamed for display
-                    'Current Affairs': currentAffairs, // Renamed for display
-                    'CSAT Practice': csatPractice, // Renamed for display
-                    'Optional Subject': optionalSubject // Renamed for display
+                    'General Studies Topic': r['General Studies Topic (Reading/Revision)'] || '',
+                    'Current Affairs': r['Current Affairs'] || '',
+                    'CSAT Practice': r['CSAT Practice'] || '',
+                    'Optional Subject': r['Optional Subject'] || ''
                 };
             });
 
             renderTable('plan', mappedFilteredPlan, 'schedule-table');
             if (mappedFilteredPlan.length > 0) {
                 showMessage(`Displaying schedule from ${start.toLocaleDateString('en-GB')} to ${end.toLocaleDateString('en-GB')}.`, 'success');
-                downloadPdfBtn.disabled = false;
+                downloadDailyPlanPdfBtn.disabled = false;
             } else {
                 showMessage('No schedule entries found for the selected date range. Please adjust dates or check your sheet data.', 'info');
-                downloadPdfBtn.disabled = true;
+                downloadDailyPlanPdfBtn.disabled = true;
             }
         }
 
@@ -458,7 +484,15 @@
 
             if (!data || data.length === 0) {
                 // Determine colspan based on containerId (Daily Plan has 6 columns, Resources vary)
-                const colspan = (containerId === 'plan') ? 6 : (resourceList.length > 0 ? Object.keys(resourceList[0]).length : 1);
+                let colspan = 1;
+                if (containerId === 'plan') {
+                    colspan = 6;
+                } else if (resourceList.length > 0 && Object.keys(resourceList[0]).length > 0) {
+                    colspan = Object.keys(resourceList[0]).length;
+                } else {
+                    colspan = 1; // Fallback if resourceList is empty or malformed
+                }
+                
                 container.innerHTML = `<table class="${tableClass}"><tbody><tr><td colspan="${colspan}" class="text-center py-6 text-gray-500">No data available</td></tr></tbody></table>`;
                 return;
             }
@@ -472,10 +506,11 @@
             container.innerHTML = html;
         }
 
-        function downloadPDF() {
+        // Renamed function to clearly indicate it's for Daily Plan
+        function downloadDailyPlanPDF() {
             clearMessage();
             if (!filteredPlan.length) {
-                showMessage("No data to download. Please view a weekly schedule first.", 'error');
+                showMessage("No daily plan data to download. Please view a weekly schedule first.", 'error');
                 return;
             }
 
@@ -525,7 +560,7 @@
                 return [
                     dateStr,
                     r['Day'] || '',
-                    r['General Studies Topic (Reading/Revision)'] || '',
+                    r['General Studies Topic (Reading/Revision)'] || '', // Use exact original header for data extraction
                     r['Current Affairs'] || '',
                     r['CSAT Practice'] || '',
                     r['Optional Subject'] || ''
@@ -569,73 +604,79 @@
                     doc.setTextColor(150);
                     doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 20, { align: 'right' });
                 },
-                // After this table, update currentY to its final position
                 didParseCell: function(data) {
                     if (data.section === 'body') {
-                        // Dynamically adjust row height based on content
                         data.cell.styles.minCellHeight = 20; // Minimum height
                     }
-                },
-                didDrawPage: function(data) {
-                    // This callback fires after each page is drawn. We need a way to get the final Y of the table
-                    // autoTable adds a 'finalY' property to the doc.autoTable.previous object
                 }
             });
 
-            // Update currentY after Daily Plan table
-            currentY = doc.autoTable.previous.finalY + 40; // Add space below the table
+            doc.save('UPSC_Daily_Plan.pdf');
+            showMessage('Daily Plan PDF generated successfully!', 'success');
+        }
 
-            // Add Resources table to PDF (on a new page if needed)
-            if (resourceList.length > 0) {
-                // Check if resources table fits on current page, otherwise add new page
-                if (currentY + 60 > doc.internal.pageSize.height - margin) { // 60 is approx height for title + some buffer
-                    doc.addPage();
-                    currentY = margin; // Reset Y for new page
-                }
-
-                // Resources Section Title
-                doc.setFont('inter', 'bold');
-                doc.setFontSize(18);
-                doc.setTextColor(51, 65, 85);
-                doc.text('Essential Resources', margin, currentY + 15);
-                currentY += 25; // Space after Resources title
-
-                const resourceHeaders = Object.keys(resourceList[0]).map(key => key || '');
-                const resourceBody = resourceList.map(row => Object.values(row).map(cell => String(cell || '')));
-
-                doc.autoTable({
-                    head: [resourceHeaders],
-                    body: resourceBody,
-                    startY: currentY,
-                    theme: 'grid',
-                    styles: {
-                        font: 'helvetica',
-                        fontSize: 8,
-                        cellPadding: 4,
-                        lineColor: [226, 232, 240],
-                        lineWidth: 0.5,
-                        overflow: 'linebreak',
-                        valign: 'top',
-                        halign: 'left'
-                    },
-                    headStyles: {
-                        fillColor: [240, 244, 248],
-                        textColor: [51, 65, 85],
-                        fontStyle: 'bold',
-                        fontSize: 9
-                    },
-                    margin: { top: margin, bottom: margin, left: margin, right: margin },
-                    didDrawPage: function (data) {
-                        // Page number in footer
-                        doc.setFontSize(8);
-                        doc.setTextColor(150);
-                        doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 20, { align: 'right' });
-                    }
-                });
+        // New function to download Resources PDF only
+        function downloadResourcesPDF() {
+            clearMessage();
+            if (resourceList.length === 0) {
+                showMessage("No resources data to download. Please ensure the 'Resource List' tab in your sheet contains data.", 'error');
+                return;
             }
 
-            doc.save('UPSC_Weekly_Plan.pdf');
-            showMessage('PDF generated successfully!', 'success');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4'); // Landscape for wider tables
+
+            const margin = 30;
+            let currentY = margin;
+
+            // Title for Resources PDF
+            doc.setFont('inter', 'bold');
+            doc.setFontSize(26);
+            doc.setTextColor(30, 41, 59);
+            doc.text('Essential Resources', doc.internal.pageSize.width / 2, currentY + 15, { align: 'center' });
+            currentY += 40;
+
+            // Prepare table headers and body for Resources
+            const resourceHeaders = Object.keys(resourceList[0]).map(key => String(key || '').trim()); // Get and trim headers
+            const resourceBody = resourceList.map(row => resourceHeaders.map(header => String(row[header] || ''))); // Map by trimmed header
+
+            doc.autoTable({
+                head: [resourceHeaders],
+                body: resourceBody,
+                startY: currentY,
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 8,
+                    cellPadding: 4,
+                    lineColor: [226, 232, 240],
+                    lineWidth: 0.5,
+                    overflow: 'linebreak',
+                    valign: 'top',
+                    halign: 'left'
+                },
+                headStyles: {
+                    fillColor: [240, 244, 248],
+                    textColor: [51, 65, 85],
+                    fontStyle: 'bold',
+                    fontSize: 9
+                },
+                margin: { top: margin, bottom: margin, left: margin, right: margin },
+                didDrawPage: function (data) {
+                    // Page number in footer
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 20, { align: 'right' });
+                },
+                didParseCell: function(data) {
+                    if (data.section === 'body') {
+                        data.cell.styles.minCellHeight = 20; // Minimum height
+                    }
+                }
+            });
+
+            doc.save('UPSC_Resources.pdf');
+            showMessage('Resources PDF generated successfully!', 'success');
         }
     </script>
 </body>
