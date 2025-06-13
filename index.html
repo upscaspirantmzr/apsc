@@ -217,12 +217,13 @@
         const SPREADSHEET_ID = GOOGLE_SHEET_URL.match(/\/d\/(.*?)\//)?.[1];
 
         // Map GS Paper values to actual TAB NAMES (sheet names) within your Google Sheet
+        // This assumes your tabs are named exactly 'GS1', 'GS2', etc.
         const GS_TAB_NAMES = {
-            'GS1': 'GS1 Questions', // Assuming 'GS1 Questions' is the tab name for GS1
-            'GS2': 'GS2 Questions', // Add more tab names as needed for GS2, GS3 etc.
-            'GS3': 'GS3 Questions',
-            'GS4': 'GS4 Questions',
-            'GS5': 'GS5 Questions'
+            'GS1': 'GS1',
+            'GS2': 'GS2',
+            'GS3': 'GS3',
+            'GS4': 'GS4',
+            'GS5': 'GS5'
         };
 
         // DOM Elements
@@ -260,13 +261,13 @@
         async function fetchGoogleSheetData(gsPaperKey) {
             clearMessage();
             if (!SPREADSHEET_ID) {
-                showMessage('Error: Could not extract Spreadsheet ID from the provided Google Sheet URL.', 'error');
+                showMessage('Error: Could not extract Spreadsheet ID from the provided Google Sheet URL. Please check the URL format.', 'error');
                 return null;
             }
 
             const sheetName = GS_TAB_NAMES[gsPaperKey];
             if (!sheetName) {
-                showMessage(`Error: No tab name mapped for ${gsPaperKey}. Please check GS_TAB_NAMES in the code.`, 'error');
+                showMessage(`Error: No tab name mapped for "${gsPaperKey}". Please check GS_TAB_NAMES in the code.`, 'error');
                 return null;
             }
 
@@ -274,6 +275,7 @@
             const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
 
             showMessage(`Fetching data from Google Sheet tab: "${sheetName}" for ${gsPaperKey}...`, 'info');
+            console.log(`Attempting to fetch data from URL: ${url}`); // Debugging log
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -288,14 +290,15 @@
                 if (data.table && data.table.rows) {
                     const values = data.table.rows.map(row => row.c.map(cell => cell ? (cell.v || '') : ''));
                     const headers = data.table.cols.map(col => col.label || col.id);
+                    console.log('Fetched raw data from Google Sheet (first 5 rows):', [headers, ...values.slice(0, 5)]); // Debugging log: parsed data sample
                     clearMessage();
                     return [headers, ...values]; // Combine headers and data rows
                 } else {
-                    throw new Error("No table data found in the response for this tab.");
+                    throw new Error("No table data found in the response for this tab. Check if the tab is empty or incorrectly structured.");
                 }
             } catch (error) {
                 console.error('Error fetching Google Sheet data:', error);
-                showMessage(`Failed to fetch data for tab "${sheetName}": ${error.message}. `, 'error');
+                showMessage(`Failed to fetch data for tab "${sheetName}": ${error.message}. Please ensure your Google Sheet is publicly shared ("Anyone with the link", "Viewer") and this specific tab ("${sheetName}") is correctly named and published to the web.`, 'error');
                 return null;
             }
         }
@@ -306,18 +309,26 @@
             const uniqueValues = new Set();
             // Skip the header row (index 0)
             for (let i = 1; i < data.length; i++) {
-                const value = data[i][columnIndex];
-                // Ensure value is not null/undefined and not an empty string after trimming
-                if (value && String(value).trim() !== '') {
-                    uniqueValues.add(String(value).trim());
+                // IMPORTANT: Check if the row and column exist before accessing
+                if (data[i] && data[i].length > columnIndex) {
+                    const value = data[i][columnIndex];
+                    // Ensure value is not null/undefined/empty string after trimming
+                    if (value !== null && value !== undefined && String(value).trim() !== '') {
+                        uniqueValues.add(String(value).trim());
+                    }
+                } else {
+                    console.warn(`Row ${i} or column ${columnIndex} is missing data. Skipping for dropdown population.`);
                 }
             }
             const sortedValues = Array.from(uniqueValues).sort();
-            console.log(`Populating ${selectElement.id}: Found ${sortedValues.length} unique values.`);
-            console.log('Unique values:', sortedValues); // Log unique values for debugging
+            console.log(`Populating ${selectElement.id}: Processing column index ${columnIndex}.`);
+            console.log(`Unique values found for ${selectElement.id}:`, sortedValues); // Log unique values for debugging
 
-            if (sortedValues.length === 0 && defaultValue !== '-- Select --') {
-                showMessage(`No ${selectElement.id.replace('Select', '')}s found for the current selection. Please check your Google Sheet data for empty cells or typos.`, 'info');
+            if (sortedValues.length === 0) { // If no values found after sorting
+                // Only show message if it's not the initial "Select" option for a primary dropdown
+                if (defaultValue !== '-- Select --') {
+                     showMessage(`No ${selectElement.id.replace('Select', '').toLowerCase()}s found for the current selection. This might be due to empty cells or typos in column ${columnIndex + 1} of your sheet.`, 'info');
+                }
             }
 
             sortedValues.forEach(value => {
@@ -395,10 +406,13 @@
                     // Skip header row and filter by subject (column index 2)
                     return index > 0 && (selectedSubject === '' || row[2]?.trim() === selectedSubject.trim());
                 });
-                console.log(`Data filtered by subject (${selectedSubject}): ${filteredBySubject.length} rows`);
-                populateDropdown(topicSelect, filteredBySubject, 3, '-- Select Topic --'); // Topic is at index 3
+                console.log(`Data filtered by subject ("${selectedSubject}"): ${filteredBySubject.length} rows.`);
+                console.log('Sample of data filtered by subject (first 3 rows):', filteredBySubject.slice(0,3));
+
+                // Column index for Topic is 3
+                populateDropdown(topicSelect, filteredBySubject, 3, '-- Select Topic --');
                 if (topicSelect.options.length <= 1) { // Only the default option means no topics found
-                     showMessage('No topics found for this subject. Try a different subject or fetch questions directly.', 'info');
+                     showMessage('No topics found for this subject. This might be due to empty cells or typos in the "Topic" column for this subject.', 'info');
                 } else {
                     clearMessage(); // Clear message if topics are found
                 }
@@ -520,7 +534,7 @@
         topicSelect.disabled = true;
 
         // Initial message
-        showMessage('Best Wishes For Your Preparation.', 'info');
+        showMessage('Please ensure your Google Sheet is publicly shared and has the correct tabs. Then, select a GS Paper to begin.', 'info');
     </script>
 </body>
 </html>
