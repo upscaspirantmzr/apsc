@@ -104,3 +104,240 @@
     padding: 8px 15px;
     font-size: 0.9em;
 }
+/* About Page Specific Styles */
+.about-content .about-card {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+}
+
+.about-content h2 {
+    font-size: 2em;
+    color: #007bff;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.about-content p {
+    font-size: 1.05em;
+    line-height: 1.7;
+    color: #444;
+    text-align: justify; /* Justify text for paragraphs */
+}
+
+/* Values Grid */
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.value-item i {
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.value-item h3 {
+    font-size: 1.3em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.value-item p {
+    font-size: 0.95em;
+    color: #666;
+    text-align: center; /* Center text for values */
+}
+
+/* Team Section */
+.team-section {
+    text-align: center;
+}
+
+.team-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.team-member {
+    flex: 0 0 280px; /* Fixed width for team member cards */
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.team-member img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 3px solid #007bff;
+}
+
+.team-member h3 {
+    font-size: 1.4em;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.team-member .role {
+    font-size: 0.9em;
+    color: #777;
+    margin-bottom: 15px;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+    text-align: center;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.testimonial-item {
+    background-color: #eef7ff; /* Light blue background */
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    border-left: 5px solid #007bff;
+}
+
+.testimonial-item p {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: left; /* Keep quote left-aligned */
+}
+
+.testimonial-item .author {
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9em;
+    text-align: right;
+}
+/* PYQ Page Specific Styles */
+.pyq-container {
+    padding: 40px 0;
+}
+
+.pyq-intro {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.pyq-intro p {
+    font-size: 1.1em;
+    color: #444;
+    line-height: 1.7;
+}
+
+.pyq-category {
+    margin-bottom: 50px;
+}
+
+.pyq-category h2 {
+    font-size: 2.2em;
+    color: #0056b3;
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0eaff;
+}
+
+.pyq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    justify-content: center;
+}
+
+.pyq-item {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pyq-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+}
+
+.pyq-item h3 {
+    font-size: 1.3em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.pyq-item p {
+    font-size: 0.95em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.btn-download {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+}
+
+.btn-download i {
+    font-size: 1.1em;
+}
+
+.pyq-notes {
+    background-color: #f0f8ff;
+    padding: 30px;
+    border-radius: 8px;
+    border-left: 5px solid #007bff;
+}
+
+.pyq-notes h2 {
+    font-size: 1.8em;
+    color: #0056b3;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.pyq-notes ul {
+    list-style: none; /* Remove default bullet points */
+    padding: 0;
+}
+
+.pyq-notes li {
+    font-size: 1em;
+    color: #444;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.pyq-notes li i {
+    color: #007bff;
+    margin-top: 3px; /* Adjust icon alignment */
+}
