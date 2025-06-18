@@ -1,369 +1,154 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPSC Answer Framework Generator</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            @apply bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex flex-col;
-        }
-        .container-card {
-            @apply bg-white p-8 rounded-2xl shadow-xl border border-gray-200;
-        }
-        .form-select {
-            @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white;
-        }
-        /* Custom scrollbar for framework output */
-        #framework-output::-webkit-scrollbar {
-            width: 8px;
-        }
-        #framework-output::-webkit-scrollbar-track {
-            background: #e2e8f0; /* gray-200 */
-            border-radius: 10px;
-        }
-        #framework-output::-webkit-scrollbar-thumb {
-            background: #94a3b8; /* gray-400 */
-            border-radius: 10px;
-        }
-        #framework-output::-webkit-scrollbar-thumb:hover {
-            background: #64748b; /* gray-500 */
-        }
-    </style>
-</head>
-<body class="flex flex-col">
+import React, { useState } from 'react';
 
-    <!-- Notification Container -->
-    <div id="notification" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg text-white text-center transition-all duration-300 ease-in-out transform -translate-y-full opacity-0">
-    </div>
+function App() {
+  const [subject, setSubject] = useState('');
+  const [topic, setTopic] = useState('');
+  const [framework, setFramework] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-700 to-blue-900 p-4 shadow-lg text-white text-center">
-        <h1 class="text-3xl font-bold">UPSC Mains Answer Framework Generator</h1>
-        <p class="text-blue-100 mt-2 text-lg">Select a Subject and Topic to generate a structured answer framework for UPSC Mains questions.</p>
-    </header>
+  // Function to call the Gemini API
+  const generateFramework = async () => {
+    if (!subject || !topic) {
+      setError('Please enter both subject and topic.');
+      return;
+    }
 
-    <!-- Main Content Area -->
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="container-card w-full max-w-5xl">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                    <label for="subject-select" class="block text-gray-700 text-sm font-semibold mb-2">Select Subject</label>
-                    <select id="subject-select" class="form-select">
-                        <option value="">-- Choose Subject --</option>
-                        <option value="Agriculture">Agriculture</option>
-                        <option value="Indian Economy">Indian Economy</option>
-                        <option value="Indian History">Indian History</option>
-                        <option value="Geography">Geography</option>
-                        <option value="Polity & Governance">Polity & Governance</option>
-                        <option value="Environment & Ecology">Environment & Ecology</option>
-                        <option value="Science & Technology">Science & Technology</option>
-                        <option value="Internal Security">Internal Security</option>
-                        <option value="International Relations">International Relations</option>
-                        <option value="Ethics, Integrity & Aptitude">Ethics, Integrity & Aptitude</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="topic-select" class="block text-gray-700 text-sm font-semibold mb-2">Select Topic</label>
-                    <select id="topic-select" class="form-select" disabled>
-                        <option value="">-- Select a Subject first --</option>
-                    </select>
-                </div>
-            </div>
+    setIsLoading(true);
+    setError('');
+    setFramework(''); // Clear previous framework
 
-            <button
-                id="generate-btn"
-                class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center"
-                disabled
-            >
-                Generate Framework
-                <svg id="loading-spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </button>
+    try {
+      const prompt = `Generate a detailed answer framework for the subject "${subject}" and the topic "${topic}". The framework should include main headings, sub-headings, and key points to cover. Format it as a structured outline.`;
 
-            <div id="framework-output" class="mt-8 p-6 bg-gray-50 rounded-lg shadow-inner border border-gray-200 text-gray-800 min-h-[200px] max-h-[600px] overflow-y-auto">
-                <p class="text-center text-gray-500">Your answer framework will appear here after generation.</p>
-            </div>
+      let chatHistory = [];
+      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+      const payload = { contents: chatHistory };
+      const apiKey = ""; // API key will be provided by the environment
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.candidates && result.candidates.length > 0 &&
+          result.candidates[0].content && result.candidates[0].content.parts &&
+          result.candidates[0].content.parts.length > 0) {
+        const text = result.candidates[0].content.parts[0].text;
+        setFramework(text);
+      } else {
+        setError('Failed to generate framework. No valid response from AI.');
+        console.error('AI response structure unexpected:', result);
+      }
+    } catch (err) {
+      setError('An error occurred while connecting to the AI. Please try again.');
+      console.error('Error fetching from AI:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 flex items-center justify-center p-4 font-sans antialiased">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl w-full max-w-3xl border border-gray-200">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-6 text-center">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
+            AI Answer Framework Generator
+          </span>
+        </h1>
+
+        <p className="text-gray-600 text-center mb-8">
+          Enter a subject and a topic to get a structured answer framework generated by AI.
+        </p>
+
+        <div className="mb-6 space-y-4">
+          <div>
+            <label htmlFor="subject" className="block text-gray-700 text-sm font-medium mb-2">
+              Subject:
+            </label>
+            <input
+              type="text"
+              id="subject"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 ease-in-out"
+              placeholder="e.g., Agriculture"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label htmlFor="topic" className="block text-gray-700 text-sm font-medium mb-2">
+              Topic:
+            </label>
+            <input
+              type="text"
+              id="topic"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 ease-in-out"
+              placeholder="e.g., Irrigation Methods"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
         </div>
-    </main>
 
-    <script type="module">
-        // --- DOM Elements ---
-        const notificationElem = document.getElementById('notification');
-        const subjectSelect = document.getElementById('subject-select');
-        const topicSelect = document.getElementById('topic-select');
-        const generateBtn = document.getElementById('generate-btn');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const frameworkOutput = document.getElementById('framework-output');
+        <button
+          onClick={generateFramework}
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold text-lg hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Generating...
+            </span>
+          ) : (
+            'Generate Framework'
+          )}
+        </button>
 
-        // --- Data for Subjects and Topics ---
-        const subjectsAndTopics = {
-            "Agriculture": [
-                "Irrigation Techniques",
-                "Crop Diversification",
-                "Food Processing Industry",
-                "Agricultural Marketing",
-                "Subsidies in Agriculture",
-                "Land Reforms"
-            ],
-            "Indian Economy": [
-                "Inflation and its control",
-                "Unemployment in India",
-                "Poverty Alleviation Schemes",
-                "Fiscal Policy",
-                "Monetary Policy",
-                "Inclusive Growth",
-                "Infrastructure Development"
-            ],
-            "Indian History": [
-                "Revolt of 1857: Causes and Impact",
-                "Non-Cooperation Movement",
-                "Partition of India",
-                "Gupta Empire: Golden Age?",
-                "Gandhian Philosophy",
-                "Post-Independence Consolidation"
-            ],
-            "Geography": [
-                "Climate Change: Impacts and Mitigation",
-                "Water Resources Management",
-                "Natural Disasters: Preparedness and Management",
-                "Population Distribution and Density",
-                "Major Agricultural Regions",
-                "Oceanic Resources"
-            ],
-            "Polity & Governance": [
-                "Indian Federalism",
-                "Fundamental Rights vs. Directive Principles",
-                "Electoral Reforms",
-                "Local Self-Government (Panchayati Raj)",
-                "Role of Parliament",
-                "Judicial Activism"
-            ],
-            "Environment & Ecology": [
-                "Biodiversity Conservation",
-                "Pollution (Air, Water, Soil, Noise)",
-                "Climate Change Conventions",
-                "Environmental Impact Assessment (EIA)",
-                "Wildlife Protection Act",
-                "Sustainable Development Goals (SDGs)"
-            ],
-            "Science & Technology": [
-                "Space Exploration",
-                "Biotechnology and its applications",
-                "Information Technology and Cybersecurity",
-                "Nanotechnology",
-                "Renewable Energy Technologies",
-                "Defense Technology"
-            ],
-            "Internal Security": [
-                "Challenges to Internal Security",
-                "Cybersecurity Threats",
-                "Naxalism",
-                "Terrorism",
-                "Border Management",
-                "Money Laundering"
-            ],
-            "International Relations": [
-                "India's Foreign Policy",
-                "India and its Neighbors",
-                "UN and Global Governance",
-                "Regional Groupings (e.g., SAARC, BIMSTEC)",
-                "India's Role in a Multipolar World",
-                "Cyber Warfare"
-            ],
-            "Ethics, Integrity & Aptitude": [
-                "Ethics and Human Interface",
-                "Attitude: Content, structure, function",
-                "Emotional Intelligence",
-                "Public Administration Ethics",
-                "Probity in Governance",
-                "Corruption"
-            ]
-        };
+        {error && (
+          <div className="mt-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm text-center">
+            {error}
+          </div>
+        )}
 
-        // --- Notification Function ---
-        function showNotification(message, type = 'success') {
-            notificationElem.textContent = message;
-            notificationElem.className = `fixed top-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg text-white text-center transition-all duration-300 ease-in-out transform translate-y-0 opacity-100
-                ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-            setTimeout(() => {
-                notificationElem.className = notificationElem.className.replace('translate-y-0 opacity-100', '-translate-y-full opacity-0');
-            }, 3000);
+        {framework && (
+          <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-inner">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 text-center">
+              Generated Answer Framework
+            </h2>
+            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed overflow-auto max-h-96">
+              {/* This assumes the AI provides Markdown or plain text. We render it as is. */}
+              {framework.split('\n').map((line, index) => (
+                <p key={index} className="mb-1">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      {/* Tailwind CSS CDN */}
+      <script src="https://cdn.tailwindcss.com"></script>
+      {/* Inter Font */}
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      <style>
+        {`
+        body {
+          font-family: 'Inter', sans-serif;
         }
+        `}
+      </style>
+    </div>
+  );
+}
 
-        // --- Event Listeners ---
-        subjectSelect.addEventListener('change', () => {
-            const selectedSubject = subjectSelect.value;
-            topicSelect.innerHTML = '<option value="">-- Choose Topic --</option>'; // Reset topics
-
-            if (selectedSubject) {
-                const topics = subjectsAndTopics[selectedSubject];
-                topics.forEach(topic => {
-                    const option = document.createElement('option');
-                    option.value = topic;
-                    option.textContent = topic;
-                    topicSelect.appendChild(option);
-                });
-                topicSelect.disabled = false;
-            } else {
-                topicSelect.disabled = true;
-                generateBtn.disabled = true; // Disable generate if no subject selected
-            }
-            // Also disable generate button if topic is not selected after subject change
-            generateBtn.disabled = !subjectSelect.value || !topicSelect.value;
-        });
-
-        topicSelect.addEventListener('change', () => {
-            // Enable generate button only if both subject and topic are selected
-            generateBtn.disabled = !subjectSelect.value || !topicSelect.value;
-        });
-
-        generateBtn.addEventListener('click', generateFramework);
-
-        // --- AI Integration Logic ---
-        async function generateFramework() {
-            const subject = subjectSelect.value;
-            const topic = topicSelect.value;
-
-            if (!subject || !topic) {
-                showNotification("Please select both a subject and a topic.", "error");
-                return;
-            }
-
-            // Show loading state
-            generateBtn.disabled = true;
-            loadingSpinner.classList.remove('hidden');
-            frameworkOutput.innerHTML = `
-                <div class="text-center text-gray-500 flex flex-col items-center justify-center min-h-[150px]">
-                    <svg class="animate-spin h-8 w-8 text-blue-500 mb-4" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Generating framework for "${topic}" in ${subject}...
-                    <p class="text-sm mt-2 text-gray-400">This might take a few moments.</p>
-                </div>
-            `;
-
-            const prompt = `Generate a comprehensive UPSC Mains answer framework for the subject "${subject}" and the topic "${topic}".
-            The framework should include the following sections with bullet points under each:
-            1. Introduction (Define the topic, its relevance)
-            2. Key Aspects/Causes/Impacts (Core content relevant to the topic)
-            3. Challenges/Issues (Problems associated with the topic)
-            4. Government Initiatives/Solutions (Steps taken or proposed)
-            5. Conclusion/Way Forward (Summary, futuristic outlook, policy recommendations)
-            Ensure the points are concise and directly relevant to a UPSC Mains answer structure.
-            The response MUST be in JSON format conforming to the provided schema.`;
-
-            try {
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                "subject": { "type": "STRING" },
-                                "topic": { "type": "STRING" },
-                                "framework": {
-                                    "type": "ARRAY",
-                                    "items": {
-                                        "type": "OBJECT",
-                                        "properties": {
-                                            "heading": { "type": "STRING" },
-                                            "points": {
-                                                "type": "ARRAY",
-                                                "items": { "type": "STRING" }
-                                            }
-                                        },
-                                        "propertyOrdering": ["heading", "points"]
-                                    }
-                                },
-                                "note": { "type": "STRING" }
-                            },
-                            "propertyOrdering": ["subject", "topic", "framework", "note"]
-                        }
-                    }
-                };
-                const apiKey = ""; // Leave as empty string for Canvas to provide
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const jsonString = result.candidates[0].content.parts[0].text;
-                    const parsedJson = JSON.parse(jsonString);
-                    displayFramework(parsedJson);
-                    showNotification('Framework generated successfully!', 'success');
-                } else {
-                    console.error("AI response structure unexpected:", result);
-                    showNotification('Failed to generate framework. Please try again.', 'error');
-                    frameworkOutput.innerHTML = `<p class="text-center text-red-500">Error: Could not generate framework. Please try again or choose a different topic.</p>`;
-                }
-            } catch (error) {
-                console.error("Error generating framework:", error);
-                showNotification(`An error occurred: ${error.message}`, 'error');
-                frameworkOutput.innerHTML = `<p class="text-center text-red-500">Error: ${error.message}. Please check console for details.</p>`;
-            } finally {
-                generateBtn.disabled = false; // Re-enable button
-                loadingSpinner.classList.add('hidden'); // Hide spinner
-            }
-        }
-
-        // --- Display Framework Function ---
-        function displayFramework(data) {
-            let html = `<h3 class="text-2xl font-bold text-gray-900 mb-4">${data.topic} - Answer Framework</h3>`;
-            html += `<p class="text-lg font-semibold text-blue-700 mb-6">Subject: ${data.subject}</p>`;
-
-            if (data.framework && Array.isArray(data.framework)) {
-                data.framework.forEach(section => {
-                    html += `<div class="mb-6 p-4 bg-white rounded-lg shadow-sm border border-blue-100">`;
-                    html += `<h4 class="text-xl font-semibold text-blue-800 mb-3">${section.heading}</h4>`;
-                    if (section.points && Array.isArray(section.points) && section.points.length > 0) {
-                        html += `<ul class="list-disc pl-5 space-y-2 text-gray-700">`;
-                        section.points.forEach(point => {
-                            html += `<li class="text-base">${point}</li>`;
-                        });
-                        html += `</ul>`;
-                    } else {
-                        html += `<p class="text-gray-500 italic">No points provided for this section.</p>`;
-                    }
-                    html += `</div>`;
-                });
-            } else {
-                html += `<p class="text-center text-gray-500">No framework data available.</p>`;
-            }
-
-            if (data.note) {
-                html += `<div class="mt-6 p-4 bg-yellow-50 rounded-lg shadow-sm border border-yellow-200 text-yellow-800">`;
-                html += `<p class="font-medium">Note:</p><p class="text-sm">${data.note}</p>`;
-                html += `</div>`;
-            }
-
-            frameworkOutput.innerHTML = html;
-        }
-
-        // Initial state for buttons
-        // This ensures the "Generate" button starts disabled until selections are made.
-        subjectSelect.dispatchEvent(new Event('change'));
-        topicSelect.dispatchEvent(new Event('change'));
-
-    </script>
-</body>
-</html>
+export default App;
