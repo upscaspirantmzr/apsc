@@ -331,7 +331,7 @@
         document.addEventListener('DOMContentLoaded', loadSheets);
 
         async function loadSheets() {
-            showMessage('Loading data from Google Sheet...', 'info');
+            showMessage('Loading data from Server...', 'info');
             try {
                 const response = await fetch(SHEET_URL);
                 if (!response.ok) {
