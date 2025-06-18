@@ -1,154 +1,63 @@
-import React, { useState } from 'react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Subject Framework Generator</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; background: #f4f4f4; }
+    select, button { padding: 0.5rem; margin: 0.5rem; }
+    #framework { background: white; padding: 1rem; margin-top: 1rem; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Select Subject and Topic</h2>
+  <select id="subjectDropdown"><option value="">Select Subject</option></select>
+  <select id="topicDropdown"><option value="">Select Topic</option></select>
+  <button onclick="showFramework()">Generate Framework</button>
 
-function App() {
-  const [subject, setSubject] = useState('');
-  const [topic, setTopic] = useState('');
-  const [framework, setFramework] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  <div id="framework"></div>
 
-  // Function to call the Gemini API
-  const generateFramework = async () => {
-    if (!subject || !topic) {
-      setError('Please enter both subject and topic.');
-      return;
-    }
+  <script>
+    const apiURL = 'https://sheet.best/api/sheets/YOUR-ID'; // Replace with your SheetBest API URL
+    let data = [];
 
-    setIsLoading(true);
-    setError('');
-    setFramework(''); // Clear previous framework
+    async function fetchData() {
+      const res = await fetch(apiURL);
+      data = await res.json();
 
-    try {
-      const prompt = `Generate a detailed answer framework for the subject "${subject}" and the topic "${topic}". The framework should include main headings, sub-headings, and key points to cover. Format it as a structured outline.`;
-
-      let chatHistory = [];
-      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-      const payload = { contents: chatHistory };
-      const apiKey = ""; // API key will be provided by the environment
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const subjects = [...new Set(data.map(row => row.Subject))];
+      const subjectDropdown = document.getElementById('subjectDropdown');
+      subjects.forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        subjectDropdown.appendChild(option);
       });
 
-      const result = await response.json();
-
-      if (result.candidates && result.candidates.length > 0 &&
-          result.candidates[0].content && result.candidates[0].content.parts &&
-          result.candidates[0].content.parts.length > 0) {
-        const text = result.candidates[0].content.parts[0].text;
-        setFramework(text);
-      } else {
-        setError('Failed to generate framework. No valid response from AI.');
-        console.error('AI response structure unexpected:', result);
-      }
-    } catch (err) {
-      setError('An error occurred while connecting to the AI. Please try again.');
-      console.error('Error fetching from AI:', err);
-    } finally {
-      setIsLoading(false);
+      subjectDropdown.addEventListener('change', () => {
+        const selected = subjectDropdown.value;
+        const topics = data.filter(row => row.Subject === selected).map(row => row.Topic);
+        const topicDropdown = document.getElementById('topicDropdown');
+        topicDropdown.innerHTML = '<option value="">Select Topic</option>';
+        topics.forEach(topic => {
+          const option = document.createElement('option');
+          option.value = topic;
+          option.textContent = topic;
+          topicDropdown.appendChild(option);
+        });
+      });
     }
-  };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 flex items-center justify-center p-4 font-sans antialiased">
-      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl w-full max-w-3xl border border-gray-200">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-6 text-center">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
-            AI Answer Framework Generator
-          </span>
-        </h1>
+    function showFramework() {
+      const subject = document.getElementById('subjectDropdown').value;
+      const topic = document.getElementById('topicDropdown').value;
+      const result = data.find(row => row.Subject === subject && row.Topic === topic);
+      document.getElementById('framework').innerHTML = result 
+        ? `<h3>${topic} (${subject})</h3><p>${result.Framework}</p>` 
+        : '<p>No framework found.</p>';
+    }
 
-        <p className="text-gray-600 text-center mb-8">
-          Enter a subject and a topic to get a structured answer framework generated by AI.
-        </p>
-
-        <div className="mb-6 space-y-4">
-          <div>
-            <label htmlFor="subject" className="block text-gray-700 text-sm font-medium mb-2">
-              Subject:
-            </label>
-            <input
-              type="text"
-              id="subject"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 ease-in-out"
-              placeholder="e.g., Agriculture"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <label htmlFor="topic" className="block text-gray-700 text-sm font-medium mb-2">
-              Topic:
-            </label>
-            <input
-              type="text"
-              id="topic"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent transition duration-200 ease-in-out"
-              placeholder="e.g., Irrigation Methods"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={generateFramework}
-          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold text-lg hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Generating...
-            </span>
-          ) : (
-            'Generate Framework'
-          )}
-        </button>
-
-        {error && (
-          <div className="mt-6 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        {framework && (
-          <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-inner">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 text-center">
-              Generated Answer Framework
-            </h2>
-            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed overflow-auto max-h-96">
-              {/* This assumes the AI provides Markdown or plain text. We render it as is. */}
-              {framework.split('\n').map((line, index) => (
-                <p key={index} className="mb-1">
-                  {line}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      {/* Tailwind CSS CDN */}
-      <script src="https://cdn.tailwindcss.com"></script>
-      {/* Inter Font */}
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-      <style>
-        {`
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        `}
-      </style>
-    </div>
-  );
-}
-
-export default App;
+    fetchData();
+  </script>
+</body>
+</html>
