@@ -256,9 +256,9 @@
                         <table class="schedule-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Day</th>
-                                    <th>General Studies Topic</th>
+                                    <th>Date/Week</th>
+                                    <th>Subject</th>
+                                    <th>Activity</th>
                                     <th>Current Affairs</th>
                                     <th>CSAT Practice</th>
                                     <th>Optional Subject</th>
@@ -459,8 +459,8 @@
                 // Access properties using the exact (trimmed) header names
                 return {
                     Date: dateStr,
-                    Day: r['Day'] || '',
-                    'General Studies Topic': r['General Studies Topic (Reading/Revision)'] || '',
+                    Subject: r['Subject'] || '',
+                    'Activity': r['Activity'] || '',
                     'Current Affairs': r['Current Affairs'] || '',
                     'CSAT Practice': r['CSAT Practice'] || '',
                     'Optional Subject': r['Optional Subject'] || ''
@@ -559,8 +559,8 @@
                                 : '';
                 return [
                     dateStr,
-                    r['Day'] || '',
-                    r['General Studies Topic (Reading/Revision)'] || '', // Use exact original header for data extraction
+                    r['Subjecy'] || '',
+                    r['Activity'] || '', // Use exact original header for data extraction
                     r['Current Affairs'] || '',
                     r['CSAT Practice'] || '',
                     r['Optional Subject'] || ''
@@ -611,7 +611,7 @@
                 }
             });
 
-            doc.save('UPSC_Daily_Plan.pdf');
+            doc.save('UPSC_Daily_Tgt_By_Aminul.pdf');
             showMessage('Daily Plan PDF generated successfully!', 'success');
         }
 
