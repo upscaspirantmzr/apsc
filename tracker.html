@@ -61,7 +61,7 @@
             z-index: 40; /* Below sidebar, above main content */
             display: none; /* Hidden by default */
             transition: opacity 0.3s ease-in-out;
-            opacity: 0;
+            opacity: 1; /* Changed to 1 for initial hidden state, will be toggled */
         }
         .overlay.active {
             display: block;
@@ -142,38 +142,38 @@
         // IMPORTANT: Replace 'YOUR_APPS_SCRIPT_WEB_APP_URL' with the URL you get after deploying your Google Apps Script.
         // The spreadsheetId and gid are now handled by the Apps Script, but you still need to provide them
         // to the Apps Script via the URL parameters.
+        const appsScriptBaseUrl = 'https://script.google.com/macros/s/AKfycbzjFgCx4vMMtxIhR7n3asXMeNolhUWIjaFVSbTD3DtuedFv-ntSDyP-0_hzOYgo3OPncQ/exec'; // Your provided Apps Script URL
+
         const sheetConfig = {
             'ca-tracker': {
                 title: 'CA Tracker Pro',
-                // Use the base URL of your deployed Apps Script web app
-                // The spreadsheetId and gid will be passed as URL parameters to the Apps Script
                 spreadsheetId: '2PACX-1vTvlsI8LRg-3YNy0n1jATEzLG6-kplFZyoWREy6_JZgxtzvKBCFwayL6JPaE9ykKCOTk0CZU9qdRR3x',
                 gid: '119872571', 
-                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_CA_TRACKER', // <<< REPLACE THIS
+                appsScriptUrl: appsScriptBaseUrl,
             },
             'judgements-pro': {
                 title: 'Judgements Pro',
                 spreadsheetId: '1-a-b-c-d-e', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
                 gid: '123456789', // <<< REPLACE THIS WITH YOUR ACTUAL GID
-                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_JUDGEMENTS_PRO', // <<< REPLACE THIS
+                appsScriptUrl: appsScriptBaseUrl,
             },
             'data-sets-pro': {
                 title: 'Data Sets Pro',
                 spreadsheetId: '1-f-g-h-i-j', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
                 gid: '987654321', // <<< REPLACE THIS WITH YOUR ACTUAL GID
-                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_DATA_SETS_PRO', // <<< REPLACE THIS
+                appsScriptUrl: appsScriptBaseUrl,
             },
             'gs123-pyq': {
                 title: 'GS 1-2-3 Mains PYQ',
                 spreadsheetId: '1-k-l-m-n-o', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
                 gid: '112233445', // <<< REPLACE THIS WITH YOUR ACTUAL GID
-                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_GS123_PYQ', // <<< REPLACE THIS
+                appsScriptUrl: appsScriptBaseUrl,
             },
             'gs4-pyq': {
                 title: 'GS 4 Mains PYQ',
                 spreadsheetId: '1-p-q-r-s-t', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
                 gid: '556677889', // <<< REPLACE THIS WITH YOUR ACTUAL GID
-                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_GS4_PYQ', // <<< REPLACE THIS
+                appsScriptUrl: appsScriptBaseUrl,
             },
         };
 
@@ -213,7 +213,7 @@
          * @param {string} appsScriptUrl - The base URL of the deployed Apps Script web app.
          * @param {string} spreadsheetId - The ID of the Google Spreadsheet to fetch.
          * @param {string} gid - The GID of the specific sheet/tab within the spreadsheet.
-         * @returns {Promise<Array<Object>>} A promise resolving to an array of row objects.
+         * @returns {Promise<Array<Object>|Object>} A promise resolving to an array of row objects or an object with a message.
          */
         async function fetchSheetData(appsScriptUrl, spreadsheetId, gid) {
             loadingIndicator.classList.remove('hidden');
@@ -235,29 +235,34 @@
                 console.error("Failed to fetch sheet data from Apps Script:", err);
                 errorText.textContent = `Failed to load data: ${err.message}. Please check your Apps Script deployment and URL.`;
                 errorMessage.classList.remove('hidden');
-                return [];
+                return { error: true, message: "Failed to load data due to an unexpected error." };
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
         }
 
         /**
-         * Renders the data into a responsive HTML table.
-         * @param {Array<Object>} data - The data to display.
+         * Renders the data into a responsive HTML table or displays a message.
+         * @param {Array<Object>|Object} data - The data to display or an object with a message.
          */
         function renderTable(data) {
             dataTableContainer.innerHTML = '';
+            noDataMessage.classList.add('hidden'); // Hide any previous no data messages
 
-            if (!data || data.length === 0) {
-                if (!errorMessage.classList.contains('hidden')) {
-                    // Don't show "no data" if an error is already showing
-                    noDataMessage.classList.add('hidden');
-                } else {
-                    noDataMessage.classList.remove('hidden');
-                }
+            if (data && typeof data === 'object' && data.message) {
+                // If the data object contains a 'message' property, display it
+                noDataMessage.querySelector('p:first-child').textContent = data.message;
+                noDataMessage.querySelector('p:last-child').textContent = ''; // Clear the second paragraph
+                noDataMessage.classList.remove('hidden');
                 return;
-            } else {
-                noDataMessage.classList.add('hidden');
+            }
+
+            if (!Array.isArray(data) || data.length === 0) {
+                // If it's not an array or an empty array, show generic no data message
+                noDataMessage.querySelector('p:first-child').textContent = 'No data available for this section.';
+                noDataMessage.querySelector('p:last-child').textContent = 'Please ensure your Google Sheet is populated and correctly linked.';
+                noDataMessage.classList.remove('hidden');
+                return;
             }
 
             const headers = Object.keys(data[0]);
@@ -354,3 +359,4 @@
     </script>
 </body>
 </html>
+
