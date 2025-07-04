@@ -76,8 +76,8 @@
 
     <!-- Sidebar Navigation -->
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 p-6 shadow-lg flex-shrink-0 z-50
-                               transform -translate-x-full transition-transform duration-300 ease-in-out
-                               md:relative md:translate-x-0 md:flex">
+                                  transform -translate-x-full transition-transform duration-300 ease-in-out
+                                  md:relative md:translate-x-0 md:flex">
         <div class="flex flex-col h-full">
             <div class="text-2xl font-bold text-blue-400 mb-8 flex items-center">
                 <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -139,38 +139,41 @@
         // ===================================================================================
         // CONFIGURATION
         // ===================================================================================
-        // IMPORTANT: Replace 'YOUR_SPREADSHEET_ID' and 'YOUR_GID' with your actual IDs.
-        // To get these:
-        // 1. Open your Google Sheet.
-        // 2. Go to File > Share > Publish to web.
-        // 3. Choose the specific sheet (tab) and select 'Comma-separated values (.csv)'.
-        // 4. Copy the generated URL and extract the ID and GID.
-        // URL format: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/gviz/tq?tqx=out:csv&gid=GID`
+        // IMPORTANT: Replace 'YOUR_APPS_SCRIPT_WEB_APP_URL' with the URL you get after deploying your Google Apps Script.
+        // The spreadsheetId and gid are now handled by the Apps Script, but you still need to provide them
+        // to the Apps Script via the URL parameters.
         const sheetConfig = {
             'ca-tracker': {
                 title: 'CA Tracker Pro',
-                spreadsheetId: 'e/2PACX-1vTvlsI8LRg-3YNy0n1jATEzLG6-kplFZyoWREy6_JZgxtzvKBCFwayL6JPaE9ykKCOTk0CZU9qdRR3x', // <<< REPLACE THIS
-                gid: '0', // <<< REPLACE THIS
+                // Use the base URL of your deployed Apps Script web app
+                // The spreadsheetId and gid will be passed as URL parameters to the Apps Script
+                spreadsheetId: '2PACX-1vTvlsI8LRg-3YNy0n1jATEzLG6-kplFZyoWREy6_JZgxtzvKBCFwayL6JPaE9ykKCOTk0CZU9qdRR3x',
+                gid: '119872571', 
+                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_CA_TRACKER', // <<< REPLACE THIS
             },
             'judgements-pro': {
                 title: 'Judgements Pro',
-                spreadsheetId: '1-a-b-c-d-e', // <<< REPLACE THIS
-                gid: '123456789', // <<< REPLACE THIS
+                spreadsheetId: '1-a-b-c-d-e', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
+                gid: '123456789', // <<< REPLACE THIS WITH YOUR ACTUAL GID
+                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_JUDGEMENTS_PRO', // <<< REPLACE THIS
             },
             'data-sets-pro': {
                 title: 'Data Sets Pro',
-                spreadsheetId: '1-f-g-h-i-j', // <<< REPLACE THIS
-                gid: '987654321', // <<< REPLACE THIS
+                spreadsheetId: '1-f-g-h-i-j', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
+                gid: '987654321', // <<< REPLACE THIS WITH YOUR ACTUAL GID
+                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_DATA_SETS_PRO', // <<< REPLACE THIS
             },
             'gs123-pyq': {
                 title: 'GS 1-2-3 Mains PYQ',
-                spreadsheetId: '1-k-l-m-n-o', // <<< REPLACE THIS
-                gid: '112233445', // <<< REPLACE THIS
+                spreadsheetId: '1-k-l-m-n-o', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
+                gid: '112233445', // <<< REPLACE THIS WITH YOUR ACTUAL GID
+                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_GS123_PYQ', // <<< REPLACE THIS
             },
             'gs4-pyq': {
                 title: 'GS 4 Mains PYQ',
-                spreadsheetId: '1-p-q-r-s-t', // <<< REPLACE THIS
-                gid: '556677889', // <<< REPLACE THIS
+                spreadsheetId: '1-p-q-r-s-t', // <<< REPLACE THIS WITH YOUR ACTUAL SPREADSHEET ID
+                gid: '556677889', // <<< REPLACE THIS WITH YOUR ACTUAL GID
+                appsScriptUrl: 'YOUR_APPS_SCRIPT_WEB_APP_URL_FOR_GS4_PYQ', // <<< REPLACE THIS
             },
         };
 
@@ -206,70 +209,36 @@
         }
 
         /**
-         * Fetches CSV data from a publicly published Google Sheet.
-         * @param {string} spreadsheetId - The ID of the Google Spreadsheet.
-         * @param {string} gid - The GID of the specific sheet.
+         * Fetches JSON data from the deployed Google Apps Script web app.
+         * @param {string} appsScriptUrl - The base URL of the deployed Apps Script web app.
+         * @param {string} spreadsheetId - The ID of the Google Spreadsheet to fetch.
+         * @param {string} gid - The GID of the specific sheet/tab within the spreadsheet.
          * @returns {Promise<Array<Object>>} A promise resolving to an array of row objects.
          */
-        async function fetchSheetData(spreadsheetId, gid) {
+        async function fetchSheetData(appsScriptUrl, spreadsheetId, gid) {
             loadingIndicator.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             dataTableContainer.innerHTML = '';
             noDataMessage.classList.add('hidden');
 
-            const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+            // Construct the URL with parameters for the Apps Script
+            const url = `${appsScriptUrl}?spreadsheetId=${spreadsheetId}&gid=${gid}`;
 
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}. Check if the sheet is published correctly.`);
+                    throw new Error(`HTTP error! status: ${response.status}. Ensure Apps Script is deployed and accessible.`);
                 }
-                const csvText = await response.text();
-                // Use the more robust CSV parser
-                return parseCSV(csvText);
+                const data = await response.json(); // Expecting JSON response
+                return data;
             } catch (err) {
-                console.error("Failed to fetch sheet data:", err);
-                errorText.textContent = `Failed to load data: ${err.message}.`;
+                console.error("Failed to fetch sheet data from Apps Script:", err);
+                errorText.textContent = `Failed to load data: ${err.message}. Please check your Apps Script deployment and URL.`;
                 errorMessage.classList.remove('hidden');
                 return [];
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
-        }
-
-       /**
-         * IMPROVED: Parses CSV text into an array of JavaScript objects.
-         * This version correctly handles quoted fields containing commas.
-         * @param {string} csvText - The CSV data as a string.
-         * @returns {Array<Object>} An array of objects representing the CSV rows.
-         */
-        function parseCSV(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim() !== '');
-            if (lines.length < 2) return []; // Need at least a header and one data row
-
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-            const rows = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i];
-                // Regex to split by comma but ignore commas inside double quotes
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                
-                const rowObject = {};
-                for (let j = 0; j < headers.length; j++) {
-                    const header = headers[j];
-                    let value = (values[j] || '').trim();
-                    // Remove quotes from start and end of the value if they exist
-                    if (value.startsWith('"') && value.endsWith('"')) {
-                        value = value.slice(1, -1);
-                    }
-                    // Replace double double-quotes with a single double-quote
-                    value = value.replace(/""/g, '"');
-                    rowObject[header] = value;
-                }
-                rows.push(rowObject);
-            }
-            return rows;
         }
 
         /**
@@ -332,7 +301,7 @@
          */
         async function loadSection(sectionKey) {
             const config = sheetConfig[sectionKey];
-            if (config) {
+            if (config && config.appsScriptUrl) { // Ensure appsScriptUrl is present
                 currentActiveSection = sectionKey;
                 sectionTitle.textContent = config.title;
 
@@ -346,14 +315,15 @@
                     activeButton.classList.remove('hover:bg-gray-700', 'text-gray-300');
                 }
 
-                const data = await fetchSheetData(config.spreadsheetId, config.gid);
+                // Call fetchSheetData with the Apps Script URL, spreadsheetId, and gid
+                const data = await fetchSheetData(config.appsScriptUrl, config.spreadsheetId, config.gid);
                 renderTable(data);
                 closeSidebar();
             } else {
-                sectionTitle.textContent = 'Section Not Found';
+                sectionTitle.textContent = 'Section Not Found or Apps Script URL Missing';
                 dataTableContainer.innerHTML = '';
                 noDataMessage.classList.add('hidden');
-                errorText.textContent = `Configuration for section '${sectionKey}' not found.`;
+                errorText.textContent = `Configuration for section '${sectionKey}' not found or appsScriptUrl is missing.`;
                 errorMessage.classList.remove('hidden');
             }
         }
