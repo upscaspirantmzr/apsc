@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPSC Tracker Pro</title>
+    <!-- Tailwind CSS CDN for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for the scrollbar and overall body */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text color */
+            overflow: hidden; /* Prevent body scroll, main content handles its own */
+        }
+
+        /* Custom scrollbar for better aesthetics in dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* Darker track */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* Greyish thumb */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a768f; /* Lighter grey on hover */
+        }
+
+        /* Ensure the main content area can scroll independently */
+        #main-content {
+            overflow-y: auto;
+        }
+        
+        /* MOBILE-FRIENDLY: Make the table container scrollable on the x-axis */
+        #data-table-container {
+            overflow-x: auto;
+        }
+
+        /* Overlay for mobile sidebar */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40; /* Below sidebar, above main content */
+            display: none; /* Hidden by default */
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+        }
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex">
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebar-overlay" class="overlay md:hidden"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 p-6 shadow-lg flex-shrink-0 z-50
+                               transform -translate-x-full transition-transform duration-300 ease-in-out
+                               md:relative md:translate-x-0 md:flex">
+        <div class="flex flex-col h-full">
+            <div class="text-2xl font-bold text-blue-400 mb-8 flex items-center">
+                <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+                </svg>
+                Tracker Pro
+            </div>
+            <nav class="flex-grow">
+                <ul id="sidebar-nav">
+                    <!-- Navigation items will be dynamically added here by JavaScript -->
+                </ul>
+            </nav>
+            <div class="mt-auto text-gray-500 text-sm pt-4">
+                Coming soon: Closure Notes Pro
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="flex-1 p-4 md:p-8 overflow-auto transition-all duration-300 ease-in-out">
+        <!-- Mobile Menu Button (Hamburger) -->
+        <button id="mobile-menu-button" class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
+        <!-- MOBILE-FRIENDLY: Added top margin for mobile to avoid overlap with fixed button -->
+        <h1 id="section-title" class="text-3xl md:text-4xl font-extrabold text-white mb-8 mt-16 md:mt-0">
+            Welcome to your Tracker Pro
+        </h1>
+
+        <div id="loading-indicator" class="hidden flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+            <p class="ml-4 text-lg text-blue-400">Loading data...</p>
+        </div>
+
+        <div id="error-message" class="hidden bg-red-800 text-white p-4 rounded-lg shadow-md">
+            <p class="font-bold mb-2">Error:</p>
+            <p id="error-text"></p>
+            <p class="mt-2 text-sm">
+                Please ensure your Google Sheet is published to the web as CSV and the IDs are correct.
+            </p>
+        </div>
+
+        <div id="data-table-container" class="bg-gray-800 rounded-lg shadow-xl">
+            <!-- Data table will be dynamically rendered here by JavaScript -->
+        </div>
+
+        <div id="no-data-message" class="hidden bg-gray-800 p-6 rounded-lg shadow-md text-center text-gray-400">
+            <p class="text-lg">No data available for this section.</p>
+            <p class="text-sm mt-2">
+                Please ensure your Google Sheet is populated and correctly linked.
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // ===================================================================================
+        // CONFIGURATION
+        // ===================================================================================
+        // IMPORTANT: Replace 'YOUR_SPREADSHEET_ID' and 'YOUR_GID' with your actual IDs.
+        // To get these:
+        // 1. Open your Google Sheet.
+        // 2. Go to File > Share > Publish to web.
+        // 3. Choose the specific sheet (tab) and select 'Comma-separated values (.csv)'.
+        // 4. Copy the generated URL and extract the ID and GID.
+        // URL format: `https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/gviz/tq?tqx=out:csv&gid=GID`
+        const sheetConfig = {
+            'ca-tracker': {
+                title: 'CA Tracker Pro',
+                spreadsheetId: '1-vQ-w-x-y-z', // <<< REPLACE THIS
+                gid: '0', // <<< REPLACE THIS
+            },
+            'judgements-pro': {
+                title: 'Judgements Pro',
+                spreadsheetId: '1-a-b-c-d-e', // <<< REPLACE THIS
+                gid: '123456789', // <<< REPLACE THIS
+            },
+            'data-sets-pro': {
+                title: 'Data Sets Pro',
+                spreadsheetId: '1-f-g-h-i-j', // <<< REPLACE THIS
+                gid: '987654321', // <<< REPLACE THIS
+            },
+            'gs123-pyq': {
+                title: 'GS 1-2-3 Mains PYQ',
+                spreadsheetId: '1-k-l-m-n-o', // <<< REPLACE THIS
+                gid: '112233445', // <<< REPLACE THIS
+            },
+            'gs4-pyq': {
+                title: 'GS 4 Mains PYQ',
+                spreadsheetId: '1-p-q-r-s-t', // <<< REPLACE THIS
+                gid: '556677889', // <<< REPLACE THIS
+            },
+        };
+
+        // DOM elements
+        const sectionTitle = document.getElementById('section-title');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const dataTableContainer = document.getElementById('data-table-container');
+        const noDataMessage = document.getElementById('no-data-message');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+
+        let currentActiveSection = 'ca-tracker'; // Default active section
+
+        /**
+         * Toggles the visibility of the sidebar on mobile.
+         */
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('active');
+        }
+
+        /**
+         * Closes the sidebar if it's open on mobile.
+         */
+        function closeSidebar() {
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+        }
+
+        /**
+         * Fetches CSV data from a publicly published Google Sheet.
+         * @param {string} spreadsheetId - The ID of the Google Spreadsheet.
+         * @param {string} gid - The GID of the specific sheet.
+         * @returns {Promise<Array<Object>>} A promise resolving to an array of row objects.
+         */
+        async function fetchSheetData(spreadsheetId, gid) {
+            loadingIndicator.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            dataTableContainer.innerHTML = '';
+            noDataMessage.classList.add('hidden');
+
+            const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}. Check if the sheet is published correctly.`);
+                }
+                const csvText = await response.text();
+                // Use the more robust CSV parser
+                return parseCSV(csvText);
+            } catch (err) {
+                console.error("Failed to fetch sheet data:", err);
+                errorText.textContent = `Failed to load data: ${err.message}.`;
+                errorMessage.classList.remove('hidden');
+                return [];
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+       /**
+         * IMPROVED: Parses CSV text into an array of JavaScript objects.
+         * This version correctly handles quoted fields containing commas.
+         * @param {string} csvText - The CSV data as a string.
+         * @returns {Array<Object>} An array of objects representing the CSV rows.
+         */
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 2) return []; // Need at least a header and one data row
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const rows = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                // Regex to split by comma but ignore commas inside double quotes
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                const rowObject = {};
+                for (let j = 0; j < headers.length; j++) {
+                    const header = headers[j];
+                    let value = (values[j] || '').trim();
+                    // Remove quotes from start and end of the value if they exist
+                    if (value.startsWith('"') && value.endsWith('"')) {
+                        value = value.slice(1, -1);
+                    }
+                    // Replace double double-quotes with a single double-quote
+                    value = value.replace(/""/g, '"');
+                    rowObject[header] = value;
+                }
+                rows.push(rowObject);
+            }
+            return rows;
+        }
+
+        /**
+         * Renders the data into a responsive HTML table.
+         * @param {Array<Object>} data - The data to display.
+         */
+        function renderTable(data) {
+            dataTableContainer.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                if (!errorMessage.classList.contains('hidden')) {
+                    // Don't show "no data" if an error is already showing
+                    noDataMessage.classList.add('hidden');
+                } else {
+                    noDataMessage.classList.remove('hidden');
+                }
+                return;
+            } else {
+                noDataMessage.classList.add('hidden');
+            }
+
+            const headers = Object.keys(data[0]);
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-700';
+
+            const thead = document.createElement('thead');
+            thead.className = 'bg-gray-700 sticky top-0'; // Sticky header for scrolling
+            const headerRow = document.createElement('tr');
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.className = 'px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider';
+                th.textContent = headerText;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = 'bg-gray-800 divide-y divide-gray-700';
+            data.forEach(rowData => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-700 transition-colors duration-150';
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-200';
+                    td.textContent = rowData[header] || '';
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+
+            dataTableContainer.appendChild(table);
+        }
+
+        /**
+         * Handles section switching and data loading.
+         * @param {string} sectionKey - The key of the section to load.
+         */
+        async function loadSection(sectionKey) {
+            const config = sheetConfig[sectionKey];
+            if (config) {
+                currentActiveSection = sectionKey;
+                sectionTitle.textContent = config.title;
+
+                document.querySelectorAll('#sidebar-nav button').forEach(button => {
+                    button.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                    button.classList.add('hover:bg-gray-700', 'text-gray-300', 'hover:text-white');
+                });
+                const activeButton = document.getElementById(`nav-button-${sectionKey}`);
+                if (activeButton) {
+                    activeButton.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                    activeButton.classList.remove('hover:bg-gray-700', 'text-gray-300');
+                }
+
+                const data = await fetchSheetData(config.spreadsheetId, config.gid);
+                renderTable(data);
+                closeSidebar();
+            } else {
+                sectionTitle.textContent = 'Section Not Found';
+                dataTableContainer.innerHTML = '';
+                noDataMessage.classList.add('hidden');
+                errorText.textContent = `Configuration for section '${sectionKey}' not found.`;
+                errorMessage.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Initializes the app: creates sidebar, adds listeners, loads default section.
+         */
+        function initializeApp() {
+            Object.keys(sheetConfig).forEach(key => {
+                const li = document.createElement('li');
+                li.className = 'mb-4';
+                const button = document.createElement('button');
+                button.id = `nav-button-${key}`;
+                button.className = `w-full text-left py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50`;
+                button.textContent = sheetConfig[key].title;
+                button.addEventListener('click', () => loadSection(key));
+                li.appendChild(button);
+                sidebarNav.appendChild(li);
+            });
+
+            mobileMenuButton.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            loadSection(currentActiveSection);
+        }
+
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
