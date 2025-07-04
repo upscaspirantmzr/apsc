@@ -3,76 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPSC Weekly Plan Generator</title>
+    <title>UPSC Tracker Pro</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts - Inter for clean text -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- SheetJS (xlsx.full.min.js) for reading Excel data -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- jsPDF and AutoTable CDNs for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- Removed jsPDF and AutoTable CDNs as they are no longer needed -->
     <style>
-        /* General Body and Container Styles */
+        /* General Body and Container Styles - Dark Theme */
+        html, body {
+            height: 100%; /* Ensure html and body take full viewport height */
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #eef2f6; /* Lighter, calming background */
-            color: #334155; /* Dark slate gray for general text */
+            background-color: #1a202c; /* Dark background from unnamed.png */
+            color: #e2e8f0; /* Light text color for contrast */
+            overflow-x: hidden; /* Prevent horizontal body scroll */
+            display: flex; /* Use flex to manage sidebar and main content layout */
+            flex-direction: row; /* Default to row for desktop */
         }
         .container {
             max-width: 1100px;
             margin: 0 auto;
             padding: 2rem;
+            width: 100%; /* Ensure container takes full width */
         }
         .card {
-            background-color: #ffffff;
+            background-color: #2d3748; /* Darker card background */
             border-radius: 1rem; /* More rounded corners for a softer look */
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08); /* More pronounced, softer shadow */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2); /* More pronounced, softer shadow for dark theme */
             padding: 2.5rem;
-            overflow-x: auto; /* Ensure horizontal scroll for tables on small screens */
+            /* overflow-x: auto; handled by data-table-container */
         }
 
-        /* Custom Scrollbar for Aesthetics */
+        /* Custom Scrollbar for Aesthetics (Dark Theme) */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #cbd5e1; /* Track color */
+            background: #4a5568; /* Darker track */
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #64748b; /* Thumb color */
+            background: #64748b; /* Greyish thumb */
             border-radius: 10px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569; /* Darker thumb on hover */
+            background: #718096; /* Lighter grey on hover */
         }
         
-        /* Form Element Styling (Date Inputs, Labels) */
+        /* Form Element Styling (Date Inputs, Labels - Adjusted for Dark Theme) */
         input[type="date"] {
             padding: 0.75rem 1rem;
-            border: 1px solid #94a3b8; /* Slightly darker border for inputs */
+            border: 1px solid #4a5568; /* Darker border for inputs */
             border-radius: 0.5rem; /* Rounded input fields */
             font-size: 1rem;
-            color: #334155;
-            background-color: #f8fafc; /* Light background for input */
+            color: #e2e8f0; /* Light text color */
+            background-color: #2d3748; /* Dark background for input */
             transition: all 0.2s ease-in-out;
         }
         input[type="date"]:focus {
             outline: none;
-            border-color: #2563eb; /* Blue-600 for focus */
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3); /* Softer focus ring */
+            border-color: #63b3ed; /* Blue-300 for focus */
+            box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.3); /* Softer focus ring */
         }
         label {
             font-weight: 600; /* Bolder labels */
-            color: #475569;
+            color: #cbd5e1; /* Lighter label text */
             margin-bottom: 0.4rem; /* More space below labels */
             display: block; /* Ensure label takes full width above input */
         }
 
-        /* Button Styling (Primary and Secondary) */
+        /* Button Styling (Primary and Secondary - Adjusted for Dark Theme) */
         .btn {
             padding: 0.85rem 1.75rem;
             border-radius: 0.75rem; /* More rounded buttons */
@@ -85,33 +93,23 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Default button shadow */
         }
         .btn-primary {
-            background-color: #2563eb; /* Strong blue */
+            background-color: #4299e1; /* Blue-500 */
             color: #ffffff;
-            border: 2px solid #2563eb;
+            border: 2px solid #4299e1;
         }
         .btn-primary:hover {
-            background-color: #1d4ed8; /* Darker blue on hover */
-            border-color: #1d4ed8;
+            background-color: #3182ce; /* Blue-600 on hover */
+            border-color: #3182ce;
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* More shadow on hover */
         }
-        .btn-secondary {
-            background-color: #10b981; /* Emerald green */
-            color: #ffffff;
-            border: 2px solid #10b981;
+        .btn-secondary { /* Used for sidebar active state */
+            background-color: #63b3ed; /* Blue-300 */
+            color: #1a202c; /* Dark text for contrast */
+            border: 2px solid #63b3ed;
         }
         .btn-secondary:hover {
-            background-color: #059669; /* Darker green on hover */
-            border-color: #059669;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-        }
-        .btn-tertiary { /* New style for Resources PDF button */
-            background-color: #f97316; /* Orange-500 */
-            color: #ffffff;
-            border: 2px solid #f97316;
-        }
-        .btn-tertiary:hover {
-            background-color: #ea580c; /* Orange-600 */
-            border-color: #ea580c;
+            background-color: #4299e1; /* Blue-500 on hover */
+            border-color: #4299e1;
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
         }
         .btn:disabled {
@@ -120,43 +118,39 @@
             box-shadow: none;
         }
 
-        /* Table Styling */
+        /* Table Styling (Dark Theme) */
         .schedule-table {
             width: 100%;
-            border-collapse: separate; /* Use separate to allow border-radius on cells/rows if needed later */
-            border-spacing: 0; /* Remove space between cells */
-            font-size: 0.95rem; /* Slightly larger text for better readability */
-            line-height: 1.5; /* Good line height */
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
         .schedule-table th, .schedule-table td {
-            border: 1px solid #e2e8f0; /* Light gray borders */
-            padding: 10px 14px; /* Generous padding */
+            border: 1px solid #4a5568; /* Darker gray borders */
+            padding: 10px 14px;
             text-align: left;
             vertical-align: top;
         }
         .schedule-table thead th {
-            background-color: #f1f5f9; /* Lighter gray header background */
-            font-weight: 700; /* Bolder header text */
-            color: #334155; /* Darker header text */
-            text-transform: capitalize; /* Keep capitalization flexible */
-            position: sticky; /* Make headers sticky for scrolling tables */
+            background-color: #4a5568; /* Darker gray header background */
+            font-weight: 700;
+            color: #e2e8f0; /* Light header text */
+            text-transform: capitalize;
+            position: sticky;
             top: 0;
             z-index: 10;
         }
+        .schedule-table tbody tr {
+            background-color: #2d3748; /* Dark background for rows */
+            color: #e2e8f0; /* Light text for rows */
+        }
         .schedule-table tbody tr:nth-child(even) {
-            background-color: #fcfdfe; /* Very subtle zebra striping */
+            background-color: #242c38; /* Slightly different dark for zebra striping */
         }
         .schedule-table tbody tr:hover {
-            background-color: #eef2f6; /* Gentle hover effect */
+            background-color: #3a475a; /* Gentle hover effect */
         }
-
-        /* Column Widths (for Web Display - PDF has its own config) */
-        .schedule-table th:nth-child(1), .schedule-table td:nth-child(1) { width: 12%; white-space: nowrap; } /* Date */
-        .schedule-table th:nth-child(2), .schedule-table td:nth-child(2) { width: 10%; white-space: nowrap; } /* Day */
-        .schedule-table th:nth-child(3), .schedule-table td:nth-child(3) { width: 35%; } /* General Studies Topic */
-        .schedule-table th:nth-child(4), .schedule-table td:nth-child(4) { width: 15%; } /* Current Affairs */
-        .schedule-table th:nth-child(5), .schedule-table td:nth-child(5) { width: 14%; } /* CSAT Practice */
-        .schedule-table th:nth-child(6), .schedule-table td:nth-child(6) { width: 14%; } /* Optional Subject */
 
         /* Responsive Table for Small Screens */
         @media (max-width: 768px) {
@@ -169,14 +163,14 @@
                 left: -9999px;
             }
             .schedule-table tr {
-                border: 1px solid #ccc;
+                border: 1px solid #4a5568; /* Darker border for mobile cards */
                 margin-bottom: 1rem;
                 border-radius: 0.5rem;
                 overflow: hidden;
             }
             .schedule-table td {
                 border: none;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid #4a5568; /* Darker separator */
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
@@ -190,6 +184,7 @@
                 white-space: nowrap;
                 text-align: left;
                 font-weight: bold;
+                color: #cbd5e1; /* Light label text */
                 content: attr(data-label);
             }
             /* Adjust padding on mobile for overall page */
@@ -200,87 +195,180 @@
                 padding: 1.5rem;
             }
         }
+
+        /* Sidebar specific styles */
+        .sidebar-aside {
+            position: fixed;
+            inset-y: 0;
+            left: 0;
+            width: 256px; /* 64 Tailwind units */
+            background-color: #1a202c; /* Dark background for sidebar */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* shadow-lg */
+            flex-shrink: 0;
+            z-index: 50;
+            transform: translateX(-100%); /* Hidden by default on mobile */
+            transition: transform 0.3s ease-in-out;
+            height: 100vh; /* Ensure sidebar takes full viewport height */
+            overflow-y: auto; /* Allow sidebar content to scroll if it overflows */
+        }
+        /* Desktop styles for sidebar */
+        @media (min-width: 768px) { /* md breakpoint */
+            .sidebar-aside {
+                position: relative;
+                transform: translateX(0);
+                display: flex;
+                height: auto; /* Let content dictate height on desktop */
+                overflow-y: visible;
+            }
+        }
+
+        /* Mobile menu button specific styles */
+        .mobile-menu-button {
+            position: fixed;
+            top: 1rem; /* top-4 */
+            left: 1rem; /* left-4 */
+            z-index: 50;
+            padding: 0.5rem; /* p-2 */
+            border-radius: 9999px; /* rounded-full */
+            background-color: #4a5568; /* gray-700 */
+            color: #ffffff;
+            outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .mobile-menu-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* focus:ring-2 focus:ring-blue-500 */
+        }
+        .mobile-menu-button.md\:hidden {
+            display: none;
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Main content area adjustment for sidebar */
+        .main-content-area {
+            flex: 1;
+            padding: 1rem; /* p-4 */
+            padding-top: 4rem; /* mt-16 for mobile to clear fixed button */
+            overflow-y: auto; /* Allow main content to scroll vertically */
+            transition: all 0.3s ease-in-out;
+            color: #e2e8f0; /* Light text for main content */
+            width: 100%; /* Ensure it takes full width on mobile */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .main-content-area {
+                padding: 2rem; /* md:p-8 */
+                padding-top: 2rem; /* md:mt-0 */
+                width: auto; /* Let flexbox handle width on desktop */
+            }
+        }
+        .main-content-area h1 {
+            color: #e2e8f0; /* Light text for main title */
+        }
+        .main-content-area h2 {
+            color: #e2e8f0; /* Light text for section titles */
+        }
+        /* Message box adjustments for dark theme */
+        #messageBox.bg-red-100 { background-color: #fed7d7; color: #c53030; border-color: #fc8181; } /* red-200, red-800, red-500 */
+        #messageBox.bg-green-100 { background-color: #c6f6d5; color: #2f855a; border-color: #68d391; } /* green-200, green-800, green-500 */
+        #messageBox.bg-blue-100 { background-color: #bee3f8; color: #2b6cb0; border-color: #63b3ed; } /* blue-200, blue-800, blue-500 */
+
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Header Section (Cleaned, no specific branding) -->
-    <header class="bg-blue-700 text-white shadow-lg">
-        <div class="container flex justify-between items-center py-5">
-            <a href="#" class="text-3xl font-extrabold tracking-tight">UPSC Study Hub</a>
-            <nav>
-                <ul class="flex space-x-6">
-                    <li><a href="#" class="hover:text-blue-200 transition duration-300">Home</a></li>
-                    <li><a href="#" class="font-semibold text-blue-200">Plan Generator</a></li>
-                    <li><a href="#" class="hover:text-blue-200 transition duration-300">About</a></li>
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebar-overlay" class="sidebar-overlay md:hidden"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar-aside md:relative md:translate-x-0 md:flex">
+        <div class="flex flex-col h-full">
+            <div class="text-2xl font-bold text-blue-400 mb-8 flex items-center">
+                <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+                </svg>
+                Tracker Pro
+            </div>
+            <nav class="flex-grow">
+                <ul id="sidebar-nav">
+                    <!-- Navigation items will be dynamically added here by JavaScript -->
                 </ul>
             </nav>
+            <div class="mt-auto text-gray-500 text-sm pt-4">
+                Coming soon: Closure Notes Pro
+            </div>
         </div>
-    </header>
+    </aside>
 
-    <!-- Main Content Section -->
-    <main class="py-10">
+    <!-- Main Content Area -->
+    <main id="main-content" class="main-content-area">
+        <!-- Mobile Menu Button (Hamburger) -->
+        <button id="mobile-menu-button" class="mobile-menu-button md:hidden">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+
         <div class="container">
             <div class="card">
-                <h1 class="text-center text-4xl font-extrabold mb-8 text-gray-900">Your Personalized Study Plan</h1>
+                <h1 id="section-title" class="text-center text-4xl font-extrabold mb-8 text-white">
+                    Welcome to your Tracker Pro
+                </h1>
 
                 <!-- Message Area -->
                 <div id="messageBox" class="mb-6 px-4 py-3 rounded-lg hidden text-sm border-l-4"></div>
 
-                <div class="flex flex-col md:flex-row items-center justify-center gap-6 mb-10">
-                    <div class="flex flex-col">
-                        <label for="startDate">Start Date:</label>
-                        <input type="date" id="startDate" class="form-input">
-                    </div>
-                    <div class="flex flex-col">
-                        <label for="endDate">End Date:</label>
-                        <input type="date" id="endDate" class="form-input">
-                    </div>
-                    <button onclick="filterAndRender()" class="btn btn-primary">
-                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 2m0 0l-2-2m2 2V9m6 11a6 6 0 11-12 0 6 6 0 0112 0z"></path></svg>
-                        View Schedule
-                    </button>
-                    <button onclick="downloadDailyPlanPDF()" id="downloadDailyPlanPdfBtn" class="btn btn-secondary" disabled>
-                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Download Daily Plan PDF
-                    </button>
-                    <button onclick="downloadResourcesPDF()" id="downloadResourcesPdfBtn" class="btn btn-tertiary">
-                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Download Resources PDF
-                    </button>
+                <div id="loading-indicator" class="hidden flex justify-center items-center h-64">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+                    <p class="ml-4 text-lg text-blue-400">Loading data...</p>
                 </div>
 
-                <div class="mb-12">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🗓️ Daily Plan</h2>
-                    <div id="plan" class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+                <div id="error-message" class="hidden bg-red-100 text-red-700 p-4 rounded-lg shadow-md border-l-4 border-red-400">
+                    <p class="font-bold mb-2">Error:</p>
+                    <p id="error-text"></p>
+                    <p class="mt-2 text-sm">
+                        Please ensure your Google Sheet is published to the web as XLSX and the URL is correct.
+                    </p>
+                </div>
+                
+                <div id="data-display-area" class="mb-12">
+                    <h2 class="text-3xl font-bold text-white mb-6 text-center">📊 Data Table</h2>
+                    <div id="data-table-container" class="overflow-x-auto rounded-lg shadow-md border border-gray-700">
                         <table class="schedule-table">
                             <thead>
                                 <tr>
-                                    <th>Date/Week</th>
-                                    <th>Subject</th>
-                                    <th>Activity</th>
-                                    <th>Current Affairs</th>
-                                    <th>CSAT Practice</th>
-                                    <th>Optional Subject</th>
+                                    <th>Loading...</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="6" class="text-center py-6 text-gray-500">Select dates and click 'View Schedule' to see your plan.</td></tr>
+                                <tr><td colspan="1" class="text-center py-6 text-gray-400">Loading sheet data...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">📚 Essential Resources</h2>
-                    <div id="resources" class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-                        <table class="schedule-table">
-                            <!-- Resource table headers and content will be dynamically loaded here -->
-                            <tbody>
-                                <tr><td colspan="5" class="text-center py-6 text-gray-500">Loading resources...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+                <div id="no-data-message" class="hidden bg-gray-700 p-6 rounded-lg shadow-md text-center text-gray-400 border-l-4 border-gray-500">
+                    <p class="text-lg">No data available for this section.</p>
+                    <p class="text-sm mt-2">
+                        Please ensure the selected Google Sheet tab is populated with data.
+                    </p>
                 </div>
             </div>
         </div>
@@ -294,15 +382,28 @@
     </footer>
 
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1dGW8t_GsBmX9WUmqlZtBvMt1QWMpmHGqaInNtzvSpZI/export?format=xlsx';
-        const SPREADSHEET_ID = '1dGW8t_GsBmX9WUmqlZtBvMt1QWMpmHGqaInNtzvSpZI';
-        let fullPlan = [], filteredPlan = [], resourceList = [];
+        // ===================================================================================
+        // CONFIGURATION
+        // ===================================================================================
+        // IMPORTANT: Replace 'YOUR_XLSX_PUBLISH_URL_HERE' with the URL you get after
+        // publishing your Google Sheet (Entire Document) to the web as a Microsoft Excel (.xlsx) file.
+        const MAIN_XLSX_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdgvggxFBfs7T0ETCtEWN9FJkWf5ORu-9-4ALHb15PhwzxxC6IG3cQKDNXOKQPUL90Xdmqm5CUBTV8/pub?output=xlsx'; // <<< REPLACE THIS
+
+        let workbook = null; // Stores the entire XLSX workbook
+        let currentSheetData = []; // Stores the data of the currently active sheet
+        let currentSheetName = ''; // Stores the name of the currently active sheet
 
         // DOM elements
-        const startDateInput = document.getElementById('startDate');
-        const endDateInput = document.getElementById('endDate');
-        const downloadDailyPlanPdfBtn = document.getElementById('downloadDailyPlanPdfBtn'); // Renamed ID
-        const downloadResourcesPdfBtn = document.getElementById('downloadResourcesPdfBtn'); // New button
+        const sectionTitle = document.getElementById('section-title');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const dataTableContainer = document.getElementById('data-table-container');
+        const noDataMessage = document.getElementById('no-data-message');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
         const messageBox = document.getElementById('messageBox');
 
         // Function to show messages
@@ -317,8 +418,7 @@
             } else {
                 messageBox.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-400');
             }
-            // Ensure border-l-4 is always present for message box
-            messageBox.classList.add('border-l-4'); 
+            messageBox.classList.remove('hidden'); // Ensure it's visible
         }
 
         // Function to clear messages
@@ -327,173 +427,180 @@
             messageBox.textContent = '';
         }
 
-        // Load data from Google Sheet on page load
-        document.addEventListener('DOMContentLoaded', loadSheets);
+        /**
+         * Toggles the visibility of the sidebar on mobile.
+         */
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('active');
+        }
 
-        async function loadSheets() {
-            showMessage('Loading data from Server...', 'info');
-            try {
-                const response = await fetch(SHEET_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-                }
-                const data = await response.arrayBuffer();
-                const workbook = XLSX.read(data, { type: 'array' });
-
-                // --- Process 'Daily Plan' sheet ---
-                const dailyPlanSheet = workbook.Sheets['Daily Plan'];
-                if (dailyPlanSheet) {
-                    const dailyRaw = XLSX.utils.sheet_to_json(dailyPlanSheet, { header: 1 }); // Read headers as first row array
-                    if (dailyRaw.length > 0) {
-                        const headers = dailyRaw[0].map(h => String(h || '').trim()); // Trim headers to remove whitespace
-                        const dataRows = dailyRaw.slice(1);
-
-                        fullPlan = dataRows.map(row => {
-                            const rowObject = {};
-                            headers.forEach((header, index) => {
-                                let cellValue = row[index];
-                                
-                                if (header === 'Date' && (typeof cellValue === 'string' || typeof cellValue === 'number')) {
-                                    try {
-                                        let parsedDate;
-                                        if (typeof cellValue === 'number') {
-                                            const jsDate = XLSX.SSF.parse_date_code(cellValue);
-                                            parsedDate = new Date(jsDate.y, jsDate.m - 1, jsDate.d);
-                                        } else { // string date
-                                            // Attempt to parse '9 Jun' format by appending current year
-                                            const currentYear = new Date().getFullYear();
-                                            parsedDate = new Date(`${cellValue} ${currentYear}`);
-                                            if (isNaN(parsedDate.getTime())) {
-                                                // If parsing with current year fails, try next year (for plans spanning year end)
-                                                parsedDate = new Date(`${cellValue} ${currentYear + 1}`);
-                                            }
-                                        }
-                                        if (!isNaN(parsedDate.getTime())) {
-                                            rowObject[header] = parsedDate;
-                                        } else {
-                                            rowObject[header] = null; // Mark as invalid date
-                                            console.warn(`Could not parse date "${cellValue}" in Daily Plan sheet.`);
-                                        }
-                                    } catch (e) {
-                                        rowObject[header] = null;
-                                        console.warn(`Error parsing date "${cellValue}" in Daily Plan sheet:`, e);
-                                    }
-                                } else {
-                                    rowObject[header] = cellValue;
-                                }
-                            });
-                            return rowObject;
-                        }).filter(row => row['Date'] instanceof Date && !isNaN(row['Date'])); // Filter out rows with invalid dates
-                        console.log('Daily Plan Headers from sheet:', headers);
-                    } else {
-                        fullPlan = [];
-                    }
-                } else {
-                    console.warn("Sheet 'Daily Plan' not found in the workbook.");
-                    fullPlan = [];
-                }
-
-                // --- Process 'Resource List' sheet ---
-                const resourceListSheet = workbook.Sheets['Resource List'];
-                if (resourceListSheet) {
-                    const resourceRaw = XLSX.utils.sheet_to_json(resourceListSheet, { header: 1 });
-                    if (resourceRaw.length > 0) {
-                        const resourceHeaders = resourceRaw[0].map(h => String(h || '').trim()); // Trim resource headers
-                        resourceList = resourceRaw.slice(1).map(row => {
-                            const rowObject = {};
-                            resourceHeaders.forEach((header, index) => {
-                                rowObject[header] = row[index];
-                            });
-                            return rowObject;
-                        });
-                        console.log('Resource List Headers from sheet:', resourceHeaders);
-                    } else {
-                        resourceList = [];
-                    }
-                } else {
-                    console.warn("Sheet 'Resource List' not found in the workbook.");
-                    resourceList = [];
-                }
-
-                renderTable('resources', resourceList, 'schedule-table');
-                
-                showMessage('Data loaded successfully! Please select dates to view your personalized schedule.', 'success');
-                console.log('Full Daily Plan Data (processed):', fullPlan);
-                console.log('Resource List Data (processed):', resourceList);
-
-            } catch (error) {
-                console.error('Error loading sheets:', error);
-                showMessage(`Failed to load data: ${error.message}. Please ensure the Google Sheet has tabs named 'Daily Plan' and 'Resource List', is published as XLSX, and is accessible.`, 'error');
+        /**
+         * Closes the sidebar if it's open on mobile.
+         */
+        function closeSidebar() {
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
             }
         }
 
-        function filterAndRender() {
+        /**
+         * Loads the entire XLSX workbook from the published Google Sheet URL.
+         */
+        async function loadWorkbook() {
+            loadingIndicator.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
             clearMessage();
-            const start = startDateInput.value ? new Date(startDateInput.value) : null;
-            const end = endDateInput.value ? new Date(endDateInput.value) : null;
+            dataTableContainer.innerHTML = `<table class="schedule-table"><thead><tr><th>Loading...</th></tr></thead><tbody><tr><td colspan="1" class="text-center py-6 text-gray-400">Loading sheet data...</td></tr></tbody></table>`;
 
-            if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) {
-                showMessage("Please select valid start and end dates.", 'error');
+            try {
+                const response = await fetch(MAIN_XLSX_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Please ensure the Google Sheet is published to web as XLSX.`);
+                }
+                const data = await response.arrayBuffer();
+                workbook = XLSX.read(data, { type: 'array' });
+                
+                populateSidebar();
+                
+                // Automatically load the first sheet found
+                if (workbook.SheetNames.length > 0) {
+                    loadSheetData(workbook.SheetNames[0]);
+                } else {
+                    showMessage('The workbook is empty or no sheets found.', 'info');
+                }
+
+            } catch (error) {
+                console.error('Error loading workbook:', error);
+                errorText.textContent = `Failed to load workbook: ${error.message}.`;
+                errorMessage.classList.remove('hidden');
+                showMessage(`Failed to load data: ${error.message}. Please ensure the Google Sheet is published as XLSX and the URL is correct.`, 'error');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Populates the sidebar with buttons for each sheet in the workbook.
+         */
+        function populateSidebar() {
+            sidebarNav.innerHTML = ''; // Clear existing items
+            workbook.SheetNames.forEach(sheetName => {
+                const li = document.createElement('li');
+                li.className = 'mb-4';
+                const button = document.createElement('button');
+                button.id = `nav-button-${sheetName.replace(/\s/g, '-')}`; // Create a safe ID
+                button.className = `w-full text-left py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-gray-300 hover:bg-gray-700 hover:text-white`;
+                button.textContent = sheetName;
+                button.addEventListener('click', () => loadSheetData(sheetName));
+                li.appendChild(button);
+                sidebarNav.appendChild(li);
+            });
+        }
+
+        /**
+         * Loads and displays data for a specific sheet from the workbook.
+         * @param {string} sheetName - The name of the sheet to load.
+         */
+        function loadSheetData(sheetName) {
+            clearMessage();
+            currentSheetName = sheetName;
+            sectionTitle.textContent = sheetName; // Update main title
+
+            // Update active sidebar button styling
+            document.querySelectorAll('#sidebar-nav button').forEach(button => {
+                button.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                button.classList.add('hover:bg-gray-700', 'text-gray-300', 'hover:text-white');
+            });
+            const activeButton = document.getElementById(`nav-button-${sheetName.replace(/\s/g, '-')}`);
+            if (activeButton) {
+                activeButton.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                activeButton.classList.remove('hover:bg-gray-700', 'text-gray-300');
+            }
+
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) {
+                showMessage(`Sheet '${sheetName}' not found in the workbook.`, 'error');
+                renderTable('data-table-container', []); // Render empty table
+                closeSidebar();
                 return;
             }
 
-            // Normalize dates to start/end of day to ensure inclusive filtering
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+            const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Read headers as first row array
 
-            filteredPlan = fullPlan.filter(r => {
-                const d = r['Date']; // r['Date'] is already a Date object from loadSheets
-                if (!(d instanceof Date) || isNaN(d.getTime())) return false; // Ensure it's a valid date
-
-                d.setHours(0, 0, 0, 0); // Normalize plan date to start of day for comparison
-                return d >= start && d <= end;
-            });
-
-            // Map keys to match the desired table headers and consolidate values
-            const mappedFilteredPlan = filteredPlan.map(r => {
-                const dateObj = r['Date'];
-                const dateStr = dateObj instanceof Date && !isNaN(dateObj)
-                                ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                                : '';
-
-                // Access properties using the exact (trimmed) header names
-                return {
-                    Date: dateStr,
-                    Subject: r['Subject'] || '',
-                    'Activity': r['Activity'] || '',
-                    'Current Affairs': r['Current Affairs'] || '',
-                    'CSAT Practice': r['CSAT Practice'] || '',
-                    'Optional Subject': r['Optional Subject'] || ''
-                };
-            });
-
-            renderTable('plan', mappedFilteredPlan, 'schedule-table');
-            if (mappedFilteredPlan.length > 0) {
-                showMessage(`Displaying schedule from ${start.toLocaleDateString('en-GB')} to ${end.toLocaleDateString('en-GB')}.`, 'success');
-                downloadDailyPlanPdfBtn.disabled = false;
-            } else {
-                showMessage('No schedule entries found for the selected date range. Please adjust dates or check your sheet data.', 'info');
-                downloadDailyPlanPdfBtn.disabled = true;
+            if (rawData.length === 0 || (rawData.length === 1 && rawData[0].every(cell => cell === null || cell === ''))) {
+                currentSheetData = []; // No data or only empty header
+                showMessage("Data will be available soon.", 'info');
+                renderTable('data-table-container', []); // Render empty table
+                closeSidebar();
+                return;
             }
+
+            const headers = rawData[0].map(h => String(h || '').trim());
+            const dataRows = rawData.slice(1);
+
+            currentSheetData = dataRows.map(row => {
+                const rowObject = {};
+                let isRowTrulyEmpty = true;
+                headers.forEach((header, index) => {
+                    let cellValue = row[index];
+                    if (cellValue === undefined || cellValue === null) {
+                        cellValue = '';
+                    } else if (typeof cellValue === 'number' && header === 'Date') {
+                        // Special handling for Excel dates
+                        try {
+                            const jsDate = XLSX.SSF.parse_date_code(cellValue);
+                            const parsedDate = new Date(jsDate.y, jsDate.m - 1, jsDate.d);
+                            if (!isNaN(parsedDate.getTime())) {
+                                cellValue = parsedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                            } else {
+                                cellValue = ''; // Invalid date
+                            }
+                        } catch (e) {
+                            cellValue = ''; // Error parsing date
+                        }
+                    } else {
+                        cellValue = String(cellValue).trim(); // Ensure all other values are trimmed strings
+                    }
+                    
+                    if (header) {
+                        rowObject[header] = cellValue;
+                    }
+                    if (cellValue !== '') {
+                        isRowTrulyEmpty = false;
+                    }
+                });
+                return isRowTrulyEmpty ? null : rowObject; // Return null for truly empty rows
+            }).filter(row => row !== null); // Filter out nulls (empty rows)
+
+            renderTable('data-table-container', currentSheetData, 'schedule-table');
+
+            if (currentSheetData.length > 0) {
+                showMessage(`Displaying data for '${sheetName}'.`, 'success');
+            } else {
+                showMessage(`No valid data found for '${sheetName}'.`, 'info');
+            }
+            closeSidebar();
         }
 
-        // renderTable function for both daily plan and resources
+        // renderTable function for any data
         function renderTable(containerId, data, tableClass = '') {
             const container = document.getElementById(containerId);
             container.innerHTML = ''; // Clear previous content
 
             if (!data || data.length === 0) {
-                // Determine colspan based on containerId (Daily Plan has 6 columns, Resources vary)
-                let colspan = 1;
-                if (containerId === 'plan') {
-                    colspan = 6;
-                } else if (resourceList.length > 0 && Object.keys(resourceList[0]).length > 0) {
-                    colspan = Object.keys(resourceList[0]).length;
+                let colspan = 1; // Default colspan
+                // Try to determine colspan based on currentSheetData headers if available
+                if (currentSheetData.length > 0 && Object.keys(currentSheetData[0]).length > 0) {
+                    colspan = Object.keys(currentSheetData[0]).length;
                 } else {
-                    colspan = 1; // Fallback if resourceList is empty or malformed
+                    // Fallback to a reasonable number if no data or headers are available
+                    // This prevents the "No data available" message from being squished
+                    // You might need to adjust this based on the max expected columns in your sheets
+                    colspan = 5; // A common number of columns for many tables
                 }
-                
-                container.innerHTML = `<table class="${tableClass}"><tbody><tr><td colspan="${colspan}" class="text-center py-6 text-gray-500">No data available</td></tr></tbody></table>`;
+
+                container.innerHTML = `<table class="${tableClass}"><tbody><tr><td colspan="${colspan}" class="text-center py-6 text-gray-400">No data available</td></tr></tbody></table>`;
                 return;
             }
 
@@ -506,178 +613,8 @@
             container.innerHTML = html;
         }
 
-        // Renamed function to clearly indicate it's for Daily Plan
-        function downloadDailyPlanPDF() {
-            clearMessage();
-            if (!filteredPlan.length) {
-                showMessage("No daily plan data to download. Please view a weekly schedule first.", 'error');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'pt', 'a4'); // 'l' for landscape, 'pt' for points, 'a4' size
-
-            const margin = 30; // Left/Right margin for PDF
-            let currentY = margin; // Keep track of Y position for elements
-
-            // Main Title for PDF
-            doc.setFont('inter', 'bold');
-            doc.setFontSize(26);
-            doc.setTextColor(30, 41, 59); /* text-slate-900 */
-            doc.text('Your Personalized Study Plan', doc.internal.pageSize.width / 2, currentY + 15, { align: 'center' });
-            currentY += 40; // Space after title
-
-            // Date Range for PDF
-            doc.setFont('inter', 'normal');
-            doc.setFontSize(12);
-            doc.setTextColor(71, 85, 105); /* text-slate-600 */
-            const startDateStr = startDateInput.value ? new Date(startDateInput.value).toLocaleDateString('en-GB') : '';
-            const endDateStr = endDateInput.value ? new Date(endDateInput.value).toLocaleDateString('en-GB') : '';
-            doc.text(`Schedule for: ${startDateStr} to ${endDateStr}`, doc.internal.pageSize.width / 2, currentY + 5, { align: 'center' });
-            currentY += 30; // Space after date range
-
-            // Daily Plan Section Title
-            doc.setFont('inter', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(51, 65, 85); /* text-slate-700 */
-            doc.text('Daily Plan', margin, currentY + 15);
-            currentY += 25; // Space after Daily Plan title
-
-            // Prepare table headers and body data for the Daily Plan
-            const dailyPlanHeaders = [
-                'Date',
-                'Day',
-                'General Studies Topic',
-                'Current Affairs',
-                'CSAT Practice',
-                'Optional Subject'
-            ];
-            const dailyPlanBody = filteredPlan.map(r => {
-                const dateObj = r['Date'];
-                const dateStr = dateObj instanceof Date && !isNaN(dateObj)
-                                ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                                : '';
-                return [
-                    dateStr,
-                    r['Subjecy'] || '',
-                    r['Activity'] || '', // Use exact original header for data extraction
-                    r['Current Affairs'] || '',
-                    r['CSAT Practice'] || '',
-                    r['Optional Subject'] || ''
-                ];
-            });
-
-            // Add Daily Plan table to PDF
-            doc.autoTable({
-                head: [dailyPlanHeaders],
-                body: dailyPlanBody,
-                startY: currentY,
-                theme: 'grid',
-                styles: {
-                    font: 'helvetica',
-                    fontSize: 8,
-                    cellPadding: 4,
-                    lineColor: [226, 232, 240], /* Light gray borders */
-                    lineWidth: 0.5,
-                    overflow: 'linebreak',
-                    valign: 'top',
-                    halign: 'left'
-                },
-                headStyles: {
-                    fillColor: [240, 244, 248], /* Lighter gray header background */
-                    textColor: [51, 65, 85], /* Darker header text */
-                    fontStyle: 'bold',
-                    fontSize: 9
-                },
-                columnStyles: {
-                    0: { cellWidth: 50 },
-                    1: { cellWidth: 50 },
-                    2: { cellWidth: 200 },
-                    3: { cellWidth: 80 },
-                    4: { cellWidth: 80 },
-                    5: { cellWidth: 'auto' }
-                },
-                margin: { top: margin, bottom: margin, left: margin, right: margin },
-                didDrawPage: function (data) {
-                    // Page number in footer
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 20, { align: 'right' });
-                },
-                didParseCell: function(data) {
-                    if (data.section === 'body') {
-                        data.cell.styles.minCellHeight = 20; // Minimum height
-                    }
-                }
-            });
-
-            doc.save('UPSC_Daily_Tgt_By_Aminul.pdf');
-            showMessage('Daily Plan PDF generated successfully!', 'success');
-        }
-
-        // New function to download Resources PDF only
-        function downloadResourcesPDF() {
-            clearMessage();
-            if (resourceList.length === 0) {
-                showMessage("No resources data to download. Please ensure the 'Resource List' tab in your sheet contains data.", 'error');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'pt', 'a4'); // Landscape for wider tables
-
-            const margin = 30;
-            let currentY = margin;
-
-            // Title for Resources PDF
-            doc.setFont('inter', 'bold');
-            doc.setFontSize(26);
-            doc.setTextColor(30, 41, 59);
-            doc.text('Essential Resources', doc.internal.pageSize.width / 2, currentY + 15, { align: 'center' });
-            currentY += 40;
-
-            // Prepare table headers and body for Resources
-            const resourceHeaders = Object.keys(resourceList[0]).map(key => String(key || '').trim()); // Get and trim headers
-            const resourceBody = resourceList.map(row => resourceHeaders.map(header => String(row[header] || ''))); // Map by trimmed header
-
-            doc.autoTable({
-                head: [resourceHeaders],
-                body: resourceBody,
-                startY: currentY,
-                theme: 'grid',
-                styles: {
-                    font: 'helvetica',
-                    fontSize: 8,
-                    cellPadding: 4,
-                    lineColor: [226, 232, 240],
-                    lineWidth: 0.5,
-                    overflow: 'linebreak',
-                    valign: 'top',
-                    halign: 'left'
-                },
-                headStyles: {
-                    fillColor: [240, 244, 248],
-                    textColor: [51, 65, 85],
-                    fontStyle: 'bold',
-                    fontSize: 9
-                },
-                margin: { top: margin, bottom: margin, left: margin, right: margin },
-                didDrawPage: function (data) {
-                    // Page number in footer
-                    doc.setFontSize(8);
-                    doc.setTextColor(150);
-                    doc.text(`Page ${data.pageNumber}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 20, { align: 'right' });
-                },
-                didParseCell: function(data) {
-                    if (data.section === 'body') {
-                        data.cell.styles.minCellHeight = 20; // Minimum height
-                    }
-                }
-            });
-
-            doc.save('UPSC_Resources.pdf');
-            showMessage('Resources PDF generated successfully!', 'success');
-        }
+        // Initialize app on window load
+        window.onload = loadWorkbook;
     </script>
 </body>
 </html>
